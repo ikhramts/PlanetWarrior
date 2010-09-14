@@ -28,6 +28,9 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(m_browseFirstBotDialog, SIGNAL(fileSelected(QString)), firstBotFile, SLOT(setText(QString)));
     QObject::connect(m_browseSecondBotDialog, SIGNAL(fileSelected(QString)), secondBotFile, SLOT(setText(QString)));
     QObject::connect(m_browseMapBotDialog, SIGNAL(fileSelected(QString)), mapFile, SLOT(setText(QString)));
+
+    //Pre-load some UI elements.
+    m_statusLabel = this->findChild<QLabel*>("statusLabel");
 }
 
 MainWindow::~MainWindow()
@@ -48,4 +51,11 @@ void MainWindow::on_browseSecondBotButton_clicked()
 void MainWindow::on_browseMapFileButton_clicked()
 {
     m_browseMapBotDialog->open();
+}
+
+
+
+void MainWindow::on_playButton_clicked()
+{
+
 }

@@ -37,6 +37,8 @@ private:
     QFileDialog* m_browseFirstBotDialog;
     QFileDialog* m_browseSecondBotDialog;
     QFileDialog* m_browseMapBotDialog;
+
+    QLabel* m_statusLabel;
 };
 
 #endif // MAINWINDOW_H
