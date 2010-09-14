@@ -29,6 +29,7 @@ private:
     Ui::MainWindow *ui;
 
 private slots:
+    void on_playButton_clicked();
     void on_browseMapFileButton_clicked();
     void on_browseSecondBotButton_clicked();
     void on_browseFirstBotButton_clicked();
