@@ -55,9 +55,10 @@ public:
     std::string getMessage() const              {return m_message;}
 
     //Access to players.
-    Player* getFirstPlayer()            { return m_firstPlayer;}
-    Player* getSecondPlayer()           { return m_secondPlayer;}
-    Player* getPlayer(int playerId)     { return (playerId == 1 ? m_firstPlayer : m_secondPlayer);}
+    Player* getFirstPlayer() const      { return m_firstPlayer;}
+    Player* getSecondPlayer() const     { return m_secondPlayer;}
+    Player* getNeutralPlayer() const    { return m_neutralPlayer;}
+    Player* getPlayer(int playerId) const;
 
     //Create a string representation of the game state given a player whose POV should be used.
     std::string toString(int pointOfView) const;
@@ -88,6 +89,7 @@ private:
     //Game objects.
     Player* m_firstPlayer;
     Player* m_secondPlayer;
+    Player* m_neutralPlayer;
     std::vector<Planet*> m_planets;
     std::vector<Fleet*> m_fleets;
     std::vector<Fleet*> m_newFleets;    //Fleets that appeared at last turn.

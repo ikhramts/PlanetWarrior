@@ -25,8 +25,13 @@
 ====================================================*/
 PlanetWarsGame::PlanetWarsGame(QObject* parent)
     :QObject(parent) {
+    m_neutralPlayer = new Player(this);
     m_firstPlayer = new Player(this);
     m_secondPlayer = new Player(this);
+
+    m_neutralPlayer->setId(0);
+    m_firstPlayer->setId(1);
+    m_secondPlayer->setId(2);
 }
 
 void PlanetWarsGame::reset() {
@@ -185,6 +190,23 @@ void PlanetWarsGame::reset() {
     this->setMessage("Game reset.");
 
     emit wasReset();
+}
+
+Player* PlanetWarsGame::getPlayer(int playerId) const {
+    switch (playerId) {
+    case 0:
+        return m_neutralPlayer;
+
+    case 1:
+        return m_firstPlayer;
+
+    case 2:
+        return m_secondPlayer;
+
+    default:
+        //The program has screwed up.
+        return NULL;
+    }
 }
 
 void PlanetWarsGame::step() {

@@ -9,10 +9,12 @@
 
 #include "mainwindow.h"
 
+#include <QGraphicsView>
 #include <QLabel>
 #include <QPushButton>
 #include "ui_mainwindow.h"
 #include "game.h"
+#include "graphics.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -44,7 +46,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(secondBotFile, SIGNAL(textChanged(QString)), secondPlayer, SLOT(setLaunchCommand(QString)));
     QObject::connect(mapFile, SIGNAL(textChanged(QString)), m_game, SLOT(setMapFileName(QString)));
 
-    //Connect the buttons to the game.
+    //Connect the buttons to the game object controls.
     QPushButton* resetButton = this->findChild<QPushButton*>("resetButton");
     QPushButton* playButton = this->findChild<QPushButton*>("playButton");
     QPushButton* pauseButton = this->findChild<QPushButton*>("pauseButton");
@@ -55,9 +57,18 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(pauseButton, SIGNAL(clicked()), m_game, SLOT(pause()));
     QObject::connect(stepButton, SIGNAL(clicked()), m_game, SLOT(step()));
 
-    //Connect the game's message property to the message output.
+    //Connect the game's message property to the message output label.
     QLabel* statusLabel = this->findChild<QLabel*>("statusLabel");
     QObject::connect(m_game, SIGNAL(messageSet(QString)), statusLabel, SLOT(setText(QString)));
+
+    //Set up the graphics view.
+    PlanetWarsView* planetWarsView = new PlanetWarsView(this);
+    planetWarsView->setGame(m_game);
+
+    QGraphicsView* gameView = this->findChild<QGraphicsView*>("gameView");
+    gameView->setScene(planetWarsView);
+    QObject::connect(m_game, SIGNAL(wasReset()), planetWarsView, SLOT(reset()));
+    gameView->scale(16,16);
 }
 
 MainWindow::~MainWindow()

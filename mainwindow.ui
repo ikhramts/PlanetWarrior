@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>536</width>
-    <height>644</height>
+    <width>545</width>
+    <height>693</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -86,13 +86,13 @@
      <string>Browse...</string>
     </property>
    </widget>
-   <widget class="QGraphicsView" name="graphicsView">
+   <widget class="QGraphicsView" name="gameView">
     <property name="geometry">
      <rect>
-      <x>40</x>
+      <x>20</x>
       <y>160</y>
-      <width>450</width>
-      <height>450</height>
+      <width>500</width>
+      <height>500</height>
      </rect>
     </property>
    </widget>
