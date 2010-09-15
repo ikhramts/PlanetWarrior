@@ -9,8 +9,8 @@
 
 #include "mainwindow.h"
 
+#include <QLabel>
 #include <QPushButton>
-
 #include "ui_mainwindow.h"
 #include "game.h"
 
@@ -32,9 +32,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(m_browseFirstBotDialog, SIGNAL(fileSelected(QString)), firstBotFile, SLOT(setText(QString)));
     QObject::connect(m_browseSecondBotDialog, SIGNAL(fileSelected(QString)), secondBotFile, SLOT(setText(QString)));
     QObject::connect(m_browseMapBotDialog, SIGNAL(fileSelected(QString)), mapFile, SLOT(setText(QString)));
-
-    //Pre-load some UI elements.
-    m_statusLabel = this->findChild<QLabel*>("statusLabel");
 
     //Set up the game.
     m_game = new PlanetWarsGame(this);

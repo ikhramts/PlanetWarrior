@@ -12,7 +12,6 @@
 
 #include <QFileDialog>
 #include <QMainWindow>
-#include <QLabel>
 
 //Forward-declared classes.
 class PlanetWarsGame;
@@ -22,6 +21,7 @@ namespace Ui {
     class MainWindow;
 }
 
+//The main application window.
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -43,8 +43,6 @@ private:
     QFileDialog* m_browseFirstBotDialog;
     QFileDialog* m_browseSecondBotDialog;
     QFileDialog* m_browseMapBotDialog;
-
-    QLabel* m_statusLabel;
 
     PlanetWarsGame* m_game;
 };
