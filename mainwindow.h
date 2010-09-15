@@ -10,8 +10,13 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
 #include <QFileDialog>
+#include <QMainWindow>
+#include <QLabel>
+
+//Forward-declared classes.
+class PlanetWarsGame;
+
 
 namespace Ui {
     class MainWindow;
@@ -40,6 +45,8 @@ private:
     QFileDialog* m_browseMapBotDialog;
 
     QLabel* m_statusLabel;
+
+    PlanetWarsGame* m_game;
 };
 
 #endif // MAINWINDOW_H

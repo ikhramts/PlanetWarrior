@@ -8,7 +8,11 @@
  */
 
 #include "mainwindow.h"
+
+#include <QPushButton>
+
 #include "ui_mainwindow.h"
+#include "game.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -31,6 +35,32 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //Pre-load some UI elements.
     m_statusLabel = this->findChild<QLabel*>("statusLabel");
+
+    //Set up the game.
+    m_game = new PlanetWarsGame(this);
+
+    Player* firstPlayer = m_game->getFirstPlayer();
+    Player* secondPlayer = m_game->getSecondPlayer();
+
+    //Connect the text fields to appropriate game variables.
+    QObject::connect(firstBotFile, SIGNAL(textChanged(QString)), firstPlayer, SLOT(setLaunchCommand(QString)));
+    QObject::connect(secondBotFile, SIGNAL(textChanged(QString)), secondPlayer, SLOT(setLaunchCommand(QString)));
+    QObject::connect(mapFile, SIGNAL(textChanged(QString)), m_game, SLOT(setMapFileName(QString)));
+
+    //Connect the buttons to the game.
+    QPushButton* resetButton = this->findChild<QPushButton*>("resetButton");
+    QPushButton* playButton = this->findChild<QPushButton*>("playButton");
+    QPushButton* pauseButton = this->findChild<QPushButton*>("pauseButton");
+    QPushButton* stepButton = this->findChild<QPushButton*>("stepForwardButton");
+
+    QObject::connect(resetButton, SIGNAL(clicked()), m_game, SLOT(reset()));
+    QObject::connect(playButton, SIGNAL(clicked()), m_game, SLOT(run()));
+    QObject::connect(pauseButton, SIGNAL(clicked()), m_game, SLOT(pause()));
+    QObject::connect(stepButton, SIGNAL(clicked()), m_game, SLOT(step()));
+
+    //Connect the game's message property to the message output.
+    QLabel* statusLabel = this->findChild<QLabel*>("statusLabel");
+    QObject::connect(m_game, SIGNAL(messageSet(QString)), statusLabel, SLOT(setText(QString)));
 }
 
 MainWindow::~MainWindow()
