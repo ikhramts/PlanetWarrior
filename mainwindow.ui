@@ -105,7 +105,7 @@
    <widget class="QPushButton" name="playButton">
     <property name="geometry">
      <rect>
-      <x>110</x>
+      <x>130</x>
       <y>100</y>
       <width>31</width>
       <height>23</height>
@@ -121,7 +121,7 @@
    <widget class="QPushButton" name="stepForwardButton">
     <property name="geometry">
      <rect>
-      <x>190</x>
+      <x>210</x>
       <y>100</y>
       <width>31</width>
       <height>23</height>
@@ -179,7 +179,7 @@
    <widget class="QPushButton" name="pauseButton">
     <property name="geometry">
      <rect>
-      <x>150</x>
+      <x>170</x>
       <y>100</y>
       <width>31</width>
       <height>23</height>
@@ -266,7 +266,7 @@
      <rect>
       <x>70</x>
       <y>100</y>
-      <width>31</width>
+      <width>51</width>
       <height>23</height>
      </rect>
     </property>
@@ -274,7 +274,7 @@
      <string>Stop the game.</string>
     </property>
     <property name="text">
-     <string>|&lt;&lt;</string>
+     <string>Reload</string>
     </property>
    </widget>
    <widget class="QTextEdit" name="logOutput">

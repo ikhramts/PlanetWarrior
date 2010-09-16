@@ -39,10 +39,18 @@ PlanetWarsGame::PlanetWarsGame(QObject* parent)
     this->setObjectName("Game Engine");
     m_firstPlayer->setObjectName("Player 1");
     m_secondPlayer->setObjectName("Player 2");
+
+    //Initialize game state.
+    m_state = STOPPED;
+    m_turn = 0;
 }
 
 void PlanetWarsGame::reset() {
-    this->logMessage("Resetting the game... ");
+    this->logMessage("Reloading the game... ");
+
+    //Stop any running processes.
+    this->stop();
+
     //Attempt to read the map from file.
     std::ifstream mapFile(m_mapFileName.c_str());
 
@@ -192,11 +200,12 @@ void PlanetWarsGame::reset() {
     m_fleets = fleets;
     m_newFleets = fleets;
 
-    m_hasStarted = true;
-    m_hasEnded = false;
+    //Reset all flags and counters.
+    m_state = RESET;
+    m_turn = 1;
 
-    this->logMessage("Game reset.");
-
+    //Notify everyone of the resetn
+    this->logMessage("Game reloaded.");
     emit wasReset();
 }
 
@@ -218,8 +227,23 @@ Player* PlanetWarsGame::getPlayer(int playerId) const {
 }
 
 void PlanetWarsGame::step() {
-    //TODO: implement.
+    if (STOPPED == m_state) {
+        return;
+    }
 
+    //On the first turn, launch the player bots.
+    if (RESET == m_state) {
+        m_firstPlayer->start();
+        m_secondPlayer->start();
+
+        m_state = RUNNING;
+    }
+
+    //Check whether the players are still running.  If they aren't, stop the game.
+    if (!m_firstPlayer->isRunning() || !m_secondPlayer->isRunning()) {
+        this->stop();
+        return;
+    }
 }
 
 void PlanetWarsGame::run() {
@@ -228,6 +252,16 @@ void PlanetWarsGame::run() {
 
 void PlanetWarsGame::pause() {
     //TODO: implement.
+}
+
+void PlanetWarsGame::stop() {
+    if (STOPPED != m_state) {
+        //Stop the players.
+        m_firstPlayer->stop();
+        m_secondPlayer->stop();
+        this->logMessage("Game ended.");
+        m_state = STOPPED;
+    }
 }
 
 void PlanetWarsGame::setMapFileName(QString mapFileName) {
@@ -296,22 +330,60 @@ void Fleet::setTurnsRemaining(int turnsRemaining) {
                 Class Player.
 ====================================================*/
 Player::Player(QObject *parent)
-    :QObject(parent), m_is_started(false), m_is_alive(false), m_botProcess(NULL) {
+    :QObject(parent), m_is_started(false), m_is_alive(false), m_process(NULL) {
 }
 
-bool Player::start() {
-    //TODO: implement.
-    return false;
+void Player::start() {
+    //Make sure we don't re-start a running process.
+    if (this->isRunning()) {
+        this->logError("Attempting to start a running process.");
+        return;
+    }
+
+    //Launch a new bot process.
+    m_process = new QProcess(this);
+    QString launchCommand(m_launchCommand.c_str());
+    m_process->start(launchCommand);
+
+    if (m_process->waitForStarted(1000)) {
+        this->logMessage("Bot process started.");
+
+    } else {
+        this->logError("Couldn't start the bot.");
+    }
 }
 
-void Player::reset() {
-    //TODO: implement.
+void Player::stop() {
+    if (this->isRunning()) {
+        //Ask the process politely to exit.
+        m_process->terminate();
+
+        if (!m_process->waitForFinished(1000)) {
+            //Didn't quit after 1 sec.  Kill it.
+            m_process->kill();
+            this->logError("Bot process killed.");
+
+        } else {
+            this->logMessage("Bot process terminated.");
+        }
+
+        delete m_process;
+        m_process = NULL;
+    }
 }
 
 std::string Player::readCommands() {
     //TODO: implement.
     std::string commands;
     return commands;
+}
+
+bool Player::isRunning() const {
+    if (m_process == NULL || m_process->state() == QProcess::NotRunning) {
+        return false;
+    }
+
+    return true;
 }
 
 void Player::sendGameState(PlanetWarsGame *game) {

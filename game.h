@@ -35,6 +35,13 @@ class PlanetWarsGame : public QObject {
     Q_OBJECT
 
 public:
+    //Possible states for the game engine.
+    enum GameState {
+        STOPPED,
+        RESET,
+        RUNNING
+    };
+
     static const int TURN_LENGTH = 1000; //milliseconds
     static const int MAX_TURMS = 200;
 
@@ -44,8 +51,6 @@ public:
     std::vector<Planet*> getPlanets() const     {return m_planets;}
     std::vector<Fleet*> getFleets() const       {return m_fleets;}
     int getWinner() const                       {return m_winner;}
-    bool hasStarted() const                     {return m_hasStarted;}
-    bool hasEnded() const                       {return m_hasEnded;}
 
     //Get the fleets that have appeared on the most recent turn.
     std::vector<Fleet*> getNewFleets() const    {return m_newFleets;}
@@ -78,6 +83,7 @@ public slots:
     void step();
     void run();
     void pause();
+    void stop();
 
 private:
     //Send information a player.
@@ -95,11 +101,13 @@ private:
     std::vector<Fleet*> m_fleets;
     std::vector<Fleet*> m_newFleets;    //Fleets that appeared at last turn.
 
+    //General game state.
+    GameState m_state;
+    int m_turn;
     int m_winner;   //-1 = game not over; 0 = draw; 1 = player 1; 2 = player 2.
-    bool m_hasStarted;
-    bool m_hasEnded;
 
     std::string m_mapFileName;
+
 };
 
 //A class representing a planet.
@@ -211,10 +219,13 @@ public:
     int getId()             { return m_id;}
 
     //Start the process.  Return true if successfull, false if not.
-    bool start();
+    void start();
 
-    //Stop the process and reset the player to original state.
-    void reset();
+    //Stop the game execution without a full reset.
+    void stop();
+
+    //Check whether the process is running.
+    bool isRunning() const;
 
     //Read commands from the player process.
     std::string readCommands();
@@ -243,7 +254,7 @@ private:
     bool m_is_started;
     bool m_is_alive;
     std::string m_launchCommand; //The shell command used to launch the AI bot.
-    QProcess* m_botProcess;
+    QProcess* m_process;
 };
 
 #endif // GAME_H
