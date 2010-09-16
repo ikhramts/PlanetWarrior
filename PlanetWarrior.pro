@@ -22,12 +22,14 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     game.cpp \
     utils.cpp \
-    graphics.cpp
+    graphics.cpp \
+    logger.cpp
 
 HEADERS  += mainwindow.h \
     game.h \
     utils.h \
-    graphics.h
+    graphics.h \
+    logger.h
 
 FORMS    += mainwindow.ui
 

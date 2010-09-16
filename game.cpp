@@ -25,6 +25,8 @@
 ====================================================*/
 PlanetWarsGame::PlanetWarsGame(QObject* parent)
     :QObject(parent) {
+
+    //Set up the players
     m_neutralPlayer = new Player(this);
     m_firstPlayer = new Player(this);
     m_secondPlayer = new Player(this);
@@ -32,14 +34,20 @@ PlanetWarsGame::PlanetWarsGame(QObject* parent)
     m_neutralPlayer->setId(0);
     m_firstPlayer->setId(1);
     m_secondPlayer->setId(2);
+
+    //Set object names.
+    this->setObjectName("Game Engine");
+    m_firstPlayer->setObjectName("Player 1");
+    m_secondPlayer->setObjectName("Player 2");
 }
 
 void PlanetWarsGame::reset() {
+    this->logMessage("Resetting the game... ");
     //Attempt to read the map from file.
     std::ifstream mapFile(m_mapFileName.c_str());
 
     if (mapFile.fail()) {
-        this->setMessage("Unable to open the map file.");
+        this->logError("Unable to open the map file.");
         return;
     }
 
@@ -79,7 +87,7 @@ void PlanetWarsGame::reset() {
                 std::stringstream message;
                 message <<"Map file error [line " << i
                         << "]: expected 6 tokens on a planet line, have " << tokens.size() <<".";
-                this->setMessage(message.str());
+                this->logError(message.str());
                 failed = true;
                 break;
             }
@@ -100,7 +108,7 @@ void PlanetWarsGame::reset() {
                 std::stringstream message;
                 message <<"Map file error [line " << i
                         << "]: expected 7 tokens on a fleet line, have " << tokens.size() <<".";
-                this->setMessage(message.str());
+                this->logError(message.str());
                 failed = true;
                 break;
             }
@@ -120,7 +128,7 @@ void PlanetWarsGame::reset() {
             std::stringstream message;
             message << "Map file error [line " << i
                     << "]: a non-empty line that does not contain a planet or a fleet.";
-            this->setMessage(message.str());
+            this->logError(message.str());
             failed = true;
             break;
         }
@@ -141,7 +149,7 @@ void PlanetWarsGame::reset() {
                 std::stringstream message;
                 message << "Map file error [line " << fleetLines[i]
                         << "]: fleet refers to an invalid planet with id=" << sourceId << ".";
-                this->setMessage(message.str());
+                this->logError(message.str());
                 failed = true;
                 break;
 
@@ -156,7 +164,7 @@ void PlanetWarsGame::reset() {
                 std::stringstream message;
                 message << "Map file error [line " << fleetLines[i]
                         << "]: fleet refers to an invalid planet with id=" << destinationId << ".";
-                this->setMessage(message.str());
+                this->logError(message.str());
                 failed = true;
                 break;
 
@@ -187,7 +195,7 @@ void PlanetWarsGame::reset() {
     m_hasStarted = true;
     m_hasEnded = false;
 
-    this->setMessage("Game reset.");
+    this->logMessage("Game reset.");
 
     emit wasReset();
 }
@@ -240,6 +248,14 @@ std::string PlanetWarsGame::toString(int pointOfView) const {
 
 void PlanetWarsGame::sendDataToPlayer(Player *player) {
     //TODO: implement.
+}
+
+void PlanetWarsGame::logMessage(const std::string &message) {
+    emit logMessage(message, this);
+}
+
+void PlanetWarsGame::logError(const std::string &message) {
+    emit logError(message, this);
 }
 
 /*===================================================
@@ -314,3 +330,16 @@ void Player::setLaunchCommand(QString launchCommand) {
 void Player::setLaunchCommand(const std::string &launchCommand) {
     m_launchCommand = launchCommand;
 }
+
+void Player::logMessage(const std::string &message) {
+    emit logMessage(message, this);
+}
+
+void Player::logError(const std::string &message) {
+    emit logError(message, this);
+}
+
+void Player::logStdErr(const std::string &message) {
+    emit logStdErr(message, this);
+}
+

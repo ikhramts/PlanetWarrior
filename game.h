@@ -73,6 +73,10 @@ signals:
     //A signal that the game state has changed.
     void wasChanged();
 
+    //Log signals.
+    void logMessage(const std::string& message, QObject* sender);
+    void logError(const std::string& message, QObject* sender);
+
 public slots:
     void setMapFileName(QString mapFileName);
 
@@ -85,6 +89,10 @@ public slots:
 private:
     //Send information a player.
     void sendDataToPlayer(Player* player);
+
+    //Signal wrappers
+    void logMessage(const std::string& message);
+    void logError(const std::string& message);
 
     //Game objects.
     Player* m_firstPlayer;
@@ -227,7 +235,18 @@ public slots:
     void setLaunchCommand(QString launchCommand);
     void setLaunchCommand(const std::string& launchCommand);
 
+signals:
+    //Log signals.
+    void logMessage(const std::string& message, QObject* sender);
+    void logError(const std::string& message, QObject* sender);
+    void logStdErr(const std::string& message, QObject* sender);
+
 private:
+    //Signal wrappers
+    void logMessage(const std::string& message);
+    void logError(const std::string& message);
+    void logStdErr(const std::string& message);
+
     int m_id;
     bool m_is_started;
     bool m_is_alive;

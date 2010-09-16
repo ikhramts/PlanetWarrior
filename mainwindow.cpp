@@ -12,9 +12,11 @@
 #include <QGraphicsView>
 #include <QLabel>
 #include <QPushButton>
+#include <QTextEdit>
 #include "ui_mainwindow.h"
 #include "game.h"
 #include "graphics.h"
+#include "logger.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -22,7 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    //Initialize the browse file dialogs, connect them to appropriate labels.
+    //Initialize the browse file dialogs, connect them to appropriate text fields.
     m_browseFirstBotDialog = new QFileDialog(this);
     m_browseSecondBotDialog = new QFileDialog(this);
     m_browseMapBotDialog = new QFileDialog(this);
@@ -68,6 +70,33 @@ MainWindow::MainWindow(QWidget *parent) :
     QGraphicsView* gameView = this->findChild<QGraphicsView*>("gameView");
     gameView->setScene(planetWarsView);
     QObject::connect(m_game, SIGNAL(wasReset()), planetWarsView, SLOT(reset()));
+
+    //Set up the logger
+    QTextEdit* logOutput = this->findChild<QTextEdit*>("logOutput");
+    Logger* logger = new Logger(this);
+    logger->setLogOutput(logOutput);
+
+    QPushButton* clearLogButton = this->findChild<QPushButton*>("clearLogButton");
+    QObject::connect(clearLogButton, SIGNAL(clicked()), logOutput, SLOT(clear()));
+
+    //Connect various parts of the game engine to the logger.
+    QObject::connect(m_game, SIGNAL(logMessage(std::string,QObject*)),
+                     logger, SLOT(recordMessage(std::string,QObject*)));
+    QObject::connect(m_game, SIGNAL(logError(std::string,QObject*)),
+                     logger, SLOT(recordError(std::string,QObject*)));
+
+    QObject::connect(firstPlayer, SIGNAL(logMessage(std::string,QObject*)),
+                     logger, SLOT(recordMessage(std::string,QObject*)));
+    QObject::connect(firstPlayer, SIGNAL(logError(std::string,QObject*)),
+                     logger, SLOT(recordError(std::string,QObject*)));
+    QObject::connect(firstPlayer, SIGNAL(logStdErr(std::string,QObject*)),
+                     logger, SLOT(recordStdErr(std::string,QObject*)));
+    QObject::connect(secondPlayer, SIGNAL(logMessage(std::string,QObject*)),
+                     logger, SLOT(recordMessage(std::string,QObject*)));
+    QObject::connect(secondPlayer, SIGNAL(logError(std::string,QObject*)),
+                     logger, SLOT(recordError(std::string,QObject*)));
+    QObject::connect(secondPlayer, SIGNAL(logStdErr(std::string,QObject*)),
+                     logger, SLOT(recordStdErr(std::string,QObject*)));
 }
 
 MainWindow::~MainWindow()
