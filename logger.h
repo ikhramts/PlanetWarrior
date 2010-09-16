@@ -24,12 +24,23 @@ public slots:
     void recordMessage(const std::string& message, QObject* sender);
     void recordError(const std::string& message, QObject* sender);
     void recordStdErr(const std::string& message, QObject* sender);
+    void recordStdIn(const std::string& message, QObject* sender);
+    void recordStdOut(const std::string& message, QObject* sender);
+
+    void setLogFirstPlayerStdIn(bool doLog)     { m_logFirstPlayerStdIn = doLog;}
+    void setLogFirstPlayerStdOut(bool doLog)    { m_logFirstPlayerStdOut = doLog;}
+    void setLogFirstPlayerStdErr(bool doLog)    { m_logFirstPlayerStdErr = doLog;}
+    void setLogSecondPlayerStdIn(bool doLog)    { m_logSecondPlayerStdIn = doLog;}
+    void setLogSecondPlayerStdOut(bool doLog)   { m_logSecondPlayerStdOut = doLog;}
+    void setLogSecondPlayerStdErr(bool doLog)   { m_logSecondPlayerStdErr = doLog;}
 
 private:
     //Message types:
     static const int MESSAGE = 0;
     static const int ERROR = 1;
     static const int STDERR = 2;
+    static const int STDIN = 3;
+    static const int STDOUT = 4;
 
     //Record the log entry.
     void recordLog(const std::string& message, QObject* sender, int messageType);
@@ -42,6 +53,15 @@ private:
     QColor m_playerMessageColor;
     QColor m_playerErrorColor;
     QColor m_playerStdErrColor;
+    QColor m_playerStdInColor;
+    QColor m_playerStdOutColor;
+
+    bool m_logFirstPlayerStdIn;
+    bool m_logFirstPlayerStdOut;
+    bool m_logFirstPlayerStdErr;
+    bool m_logSecondPlayerStdIn;
+    bool m_logSecondPlayerStdOut;
+    bool m_logSecondPlayerStdErr;
 };
 
 

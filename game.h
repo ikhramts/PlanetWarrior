@@ -23,6 +23,7 @@
 #include <QObject>
 #include <QProcess>
 #include <QString>
+#include <QTimer>
 
 //Predeclared classes.
 class PlanetWarsGame;
@@ -39,7 +40,13 @@ public:
     enum GameState {
         STOPPED,
         RESET,
-        RUNNING
+        READY,
+        STEPPING
+    };
+
+    enum RunningState {
+        RUNNING,
+        PAUSED,
     };
 
     static const int TURN_LENGTH = 1000; //milliseconds
@@ -61,8 +68,9 @@ public:
     Player* getNeutralPlayer() const    { return m_neutralPlayer;}
     Player* getPlayer(int playerId) const;
 
-    //Create a string representation of the game state given a player whose POV should be used.
-    std::string toString(int pointOfView) const;
+    //Create a string representation of the game state given a player whose
+    //point of view should be used.
+    std::string toString(Player* pov) const;
 
 signals:
     //A signal that the game has been reset.
@@ -85,10 +93,14 @@ public slots:
     void pause();
     void stop();
 
-private:
-    //Send information a player.
-    void sendDataToPlayer(Player* player);
+    //Slots for accepting timer settings.
+    void setTurnLength(int turnLength)          {m_turnLength = turnLength;}
+    void setTimerIgnored(bool isTimerIgnored)   {m_isTimerIgnored = isTimerIgnored;}
 
+    //Complete the step once the timer times out.
+    void completeStep();
+
+private:
     //Signal wrappers
     void logMessage(const std::string& message);
     void logError(const std::string& message);
@@ -103,11 +115,16 @@ private:
 
     //General game state.
     GameState m_state;
+    RunningState m_runningState;
     int m_turn;
     int m_winner;   //-1 = game not over; 0 = draw; 1 = player 1; 2 = player 2.
 
     std::string m_mapFileName;
 
+    //Timer.
+    QTimer* m_timer;
+    int m_turnLength;
+    bool m_isTimerIgnored;
 };
 
 //A class representing a planet.
@@ -231,7 +248,7 @@ public:
     std::string readCommands();
 
     //Send updated map to the player process.
-    void sendGameState(PlanetWarsGame* game);
+    void sendGameState(const std::string& gameState);
 
 public slots:
     //Set the shell command used to launch the AI bot.
@@ -247,6 +264,8 @@ signals:
     void logMessage(const std::string& message, QObject* sender);
     void logError(const std::string& message, QObject* sender);
     void logStdErr(const std::string& message, QObject* sender);
+    void logStdIn(const std::string& message, QObject* sender);
+    void logStdOut(const std::string& message, QObject* sender);
 
 private:
     //Signal wrappers.
@@ -259,6 +278,7 @@ private:
     bool m_is_alive;
     std::string m_launchCommand; //The shell command used to launch the AI bot.
     QProcess* m_process;
+
 };
 
 #endif // GAME_H

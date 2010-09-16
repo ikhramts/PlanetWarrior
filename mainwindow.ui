@@ -311,7 +311,7 @@
      <string>Clear</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="ignoreTimeoutsCheckbox">
+   <widget class="QCheckBox" name="ignoreTimer">
     <property name="geometry">
      <rect>
       <x>810</x>
@@ -340,7 +340,7 @@
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
-   <widget class="QSpinBox" name="timeoutField">
+   <widget class="QSpinBox" name="turnLength">
     <property name="geometry">
      <rect>
       <x>720</x>
@@ -372,7 +372,7 @@
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
-   <widget class="QSpinBox" name="maxTurnsField">
+   <widget class="QSpinBox" name="maxTurns">
     <property name="geometry">
      <rect>
       <x>720</x>
@@ -488,7 +488,7 @@
      <string>Player 2</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="checkBox_3">
+   <widget class="QCheckBox" name="logFirstPlayerStdIn">
     <property name="geometry">
      <rect>
       <x>1000</x>
@@ -501,7 +501,7 @@
      <string/>
     </property>
    </widget>
-   <widget class="QCheckBox" name="checkBox_4">
+   <widget class="QCheckBox" name="logFirstPlayerStdOut">
     <property name="geometry">
      <rect>
       <x>1000</x>
@@ -514,7 +514,7 @@
      <string/>
     </property>
    </widget>
-   <widget class="QCheckBox" name="checkBox_5">
+   <widget class="QCheckBox" name="logSecondPlayerStdIn">
     <property name="geometry">
      <rect>
       <x>1050</x>
@@ -527,7 +527,7 @@
      <string/>
     </property>
    </widget>
-   <widget class="QCheckBox" name="checkBox_6">
+   <widget class="QCheckBox" name="logFirstPlayerStdErr">
     <property name="geometry">
      <rect>
       <x>1000</x>
@@ -546,7 +546,7 @@
      <bool>false</bool>
     </property>
    </widget>
-   <widget class="QCheckBox" name="checkBox_7">
+   <widget class="QCheckBox" name="logSecondPlayerStdOut">
     <property name="geometry">
      <rect>
       <x>1050</x>
@@ -559,7 +559,7 @@
      <string/>
     </property>
    </widget>
-   <widget class="QCheckBox" name="checkBox_8">
+   <widget class="QCheckBox" name="logSecondPlayerStdErr">
     <property name="geometry">
      <rect>
       <x>1050</x>

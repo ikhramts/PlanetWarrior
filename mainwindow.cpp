@@ -9,10 +9,12 @@
 
 #include "mainwindow.h"
 
+#include <QCheckBox>
 #include <QGraphicsView>
 #include <QLabel>
 #include <QPushButton>
 #include <QTextEdit>
+#include <QSpinBox>
 #include "ui_mainwindow.h"
 #include "game.h"
 #include "graphics.h"
@@ -81,18 +83,60 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(m_game, SIGNAL(logError(std::string,QObject*)),
                      logger, SLOT(recordError(std::string,QObject*)));
 
+    //Connect the first player to the logger.
     QObject::connect(firstPlayer, SIGNAL(logMessage(std::string,QObject*)),
                      logger, SLOT(recordMessage(std::string,QObject*)));
     QObject::connect(firstPlayer, SIGNAL(logError(std::string,QObject*)),
                      logger, SLOT(recordError(std::string,QObject*)));
     QObject::connect(firstPlayer, SIGNAL(logStdErr(std::string,QObject*)),
                      logger, SLOT(recordStdErr(std::string,QObject*)));
+    QObject::connect(firstPlayer, SIGNAL(logStdIn(std::string,QObject*)),
+                     logger, SLOT(recordStdIn(std::string,QObject*)));
+    QObject::connect(firstPlayer, SIGNAL(logStdOut(std::string,QObject*)),
+                     logger, SLOT(recordStdOut(std::string,QObject*)));
+
+    //Connect the second player to the logger.
     QObject::connect(secondPlayer, SIGNAL(logMessage(std::string,QObject*)),
                      logger, SLOT(recordMessage(std::string,QObject*)));
     QObject::connect(secondPlayer, SIGNAL(logError(std::string,QObject*)),
                      logger, SLOT(recordError(std::string,QObject*)));
     QObject::connect(secondPlayer, SIGNAL(logStdErr(std::string,QObject*)),
                      logger, SLOT(recordStdErr(std::string,QObject*)));
+    QObject::connect(secondPlayer, SIGNAL(logStdIn(std::string,QObject*)),
+                     logger, SLOT(recordStdIn(std::string,QObject*)));
+    QObject::connect(secondPlayer, SIGNAL(logStdOut(std::string,QObject*)),
+                     logger, SLOT(recordStdOut(std::string,QObject*)));
+
+    //Connect logging settings in the GUI to the logger settings.
+    QCheckBox* logFirstPlayerStdIn = this->findChild<QCheckBox*>("logFirstPlayerStdIn");
+    QCheckBox* logFirstPlayerStdOut = this->findChild<QCheckBox*>("logFirstPlayerStdOut");
+    QCheckBox* logFirstPlayerStdErr = this->findChild<QCheckBox*>("logFirstPlayerStdErr");
+    QCheckBox* logSecondPlayerStdIn = this->findChild<QCheckBox*>("logSecondPlayerStdIn");
+    QCheckBox* logSecondPlayerStdOut = this->findChild<QCheckBox*>("logSecondPlayerStdOut");
+    QCheckBox* logSecondPlayerStdErr = this->findChild<QCheckBox*>("logSecondPlayerStdErr");
+
+    QObject::connect(logFirstPlayerStdIn, SIGNAL(clicked(bool)),
+                     logger, SLOT(setLogFirstPlayerStdIn(bool)));
+    QObject::connect(logFirstPlayerStdOut, SIGNAL(clicked(bool)),
+                     logger, SLOT(setLogFirstPlayerStdOut(bool)));
+    QObject::connect(logFirstPlayerStdErr, SIGNAL(clicked(bool)),
+                     logger, SLOT(setLogFirstPlayerStdErr(bool)));
+    QObject::connect(logSecondPlayerStdIn, SIGNAL(clicked(bool)),
+                     logger, SLOT(setLogSecondPlayerStdIn(bool)));
+    QObject::connect(logSecondPlayerStdOut, SIGNAL(clicked(bool)),
+                     logger, SLOT(setLogSecondPlayerStdOut(bool)));
+    QObject::connect(logSecondPlayerStdErr, SIGNAL(clicked(bool)),
+                     logger, SLOT(setLogSecondPlayerStdErr(bool)));
+
+    //Connect the timer settings to the game engine.
+    QSpinBox* turnLength = this->findChild<QSpinBox*>("turnLength");
+    QCheckBox* ignoreTimer = this->findChild<QCheckBox*>("ignoreTimer");
+
+    m_game->setTurnLength(turnLength->value());
+    m_game->setTimerIgnored(ignoreTimer->isChecked());
+
+    QObject::connect(turnLength, SIGNAL(valueChanged(int)), m_game, SLOT(setTurnLength(int)));
+    QObject::connect(ignoreTimer, SIGNAL(clicked(bool)), m_game, SLOT(setTimerIgnored(bool)));
 }
 
 MainWindow::~MainWindow()

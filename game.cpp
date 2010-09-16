@@ -42,7 +42,12 @@ PlanetWarsGame::PlanetWarsGame(QObject* parent)
 
     //Initialize game state.
     m_state = STOPPED;
+    m_runningState = PAUSED;
     m_turn = 0;
+
+    //Initialize the timer.
+    m_timer = new QTimer(this);
+    QObject::connect(m_timer, SIGNAL(timeout()), this, SLOT(completeStep()));
 }
 
 void PlanetWarsGame::reset() {
@@ -227,7 +232,7 @@ Player* PlanetWarsGame::getPlayer(int playerId) const {
 }
 
 void PlanetWarsGame::step() {
-    if (STOPPED == m_state) {
+    if (STOPPED == m_state || STEPPING == m_state) {
         return;
     }
 
@@ -236,7 +241,7 @@ void PlanetWarsGame::step() {
         m_firstPlayer->start();
         m_secondPlayer->start();
 
-        m_state = RUNNING;
+        m_state = READY;
     }
 
     //Check whether the players are still running.  If they aren't, stop the game.
@@ -244,6 +249,40 @@ void PlanetWarsGame::step() {
         this->stop();
         return;
     }
+
+    //Send the current game state to the bots.
+    std::string messageToFirstPlayer = this->toString(m_firstPlayer);
+    std::string messageToSecondPlayer = this->toString(m_secondPlayer);
+
+    m_firstPlayer->sendGameState(messageToFirstPlayer);
+    m_secondPlayer->sendGameState(messageToSecondPlayer);
+
+    m_state = STEPPING;
+
+    if (m_isTimerIgnored) {
+        //Complete the turn right away.
+        this->completeStep();
+
+    } else {
+        //Set the timer; once the turn is over, completeStep() will be called.
+        m_timer->start(m_turnLength);
+    }
+}
+
+void PlanetWarsGame::completeStep() {
+    //Proceed only if there's an unfinished step.
+    if (STEPPING != m_state) {
+        return;
+    }
+
+    m_state = READY;
+
+    //Read the the responses from each of the players.
+    std::string firstPlayerMoves(m_firstPlayer->readCommands());
+    std::string secondPlayerMoves(m_secondPlayer->readCommands());
+
+    //Parse the moves.
+
 }
 
 void PlanetWarsGame::run() {
@@ -261,6 +300,7 @@ void PlanetWarsGame::stop() {
         m_secondPlayer->stop();
         this->logMessage("Game ended.");
         m_state = STOPPED;
+        m_runningState = PAUSED;
     }
 }
 
@@ -268,14 +308,10 @@ void PlanetWarsGame::setMapFileName(QString mapFileName) {
     m_mapFileName = mapFileName.toStdString();
 }
 
-std::string PlanetWarsGame::toString(int pointOfView) const {
+std::string PlanetWarsGame::toString(Player* pov) const {
     //TODO: implement.
     std::string result;
     return result;
-}
-
-void PlanetWarsGame::sendDataToPlayer(Player *player) {
-    //TODO: implement.
 }
 
 void PlanetWarsGame::logMessage(const std::string &message) {
