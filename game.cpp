@@ -230,12 +230,6 @@ void PlanetWarsGame::pause() {
     //TODO: implement.
 }
 
-void PlanetWarsGame::setMessage(const std::string& message) {
-    m_message = message;
-    QString qMessage(message.c_str());
-    emit messageSet(qMessage);
-}
-
 void PlanetWarsGame::setMapFileName(QString mapFileName) {
     m_mapFileName = mapFileName.toStdString();
 }

@@ -50,10 +50,6 @@ public:
     //Get the fleets that have appeared on the most recent turn.
     std::vector<Fleet*> getNewFleets() const    {return m_newFleets;}
 
-    //Message string.
-    void setMessage(const std::string& message);
-    std::string getMessage() const              {return m_message;}
-
     //Access to players.
     Player* getFirstPlayer() const      { return m_firstPlayer;}
     Player* getSecondPlayer() const     { return m_secondPlayer;}
@@ -64,9 +60,6 @@ public:
     std::string toString(int pointOfView) const;
 
 signals:
-    //A signal that the message string was changed.
-    void messageSet(QString);
-
     //A signal that the game has been reset.
     void wasReset();
 
@@ -101,7 +94,6 @@ private:
     std::vector<Planet*> m_planets;
     std::vector<Fleet*> m_fleets;
     std::vector<Fleet*> m_newFleets;    //Fleets that appeared at last turn.
-    std::string m_message;
 
     int m_winner;   //-1 = game not over; 0 = draw; 1 = player 1; 2 = player 2.
     bool m_hasStarted;

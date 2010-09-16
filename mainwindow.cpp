@@ -59,10 +59,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(pauseButton, SIGNAL(clicked()), m_game, SLOT(pause()));
     QObject::connect(stepButton, SIGNAL(clicked()), m_game, SLOT(step()));
 
-    //Connect the game's message property to the message output label.
-    QLabel* statusLabel = this->findChild<QLabel*>("statusLabel");
-    QObject::connect(m_game, SIGNAL(messageSet(QString)), statusLabel, SLOT(setText(QString)));
-
     //Set up the graphics view.
     PlanetWarsView* planetWarsView = new PlanetWarsView(this);
     planetWarsView->setGame(m_game);
