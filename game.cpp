@@ -348,6 +348,12 @@ void Player::start() {
     if (m_process->waitForStarted(1000)) {
         this->logMessage("Bot process started.");
 
+        //Make some signal/slot connections.
+        QObject::connect(m_process, SIGNAL(readyReadStandardError()),
+                         this, SLOT(readStdErr()));
+        QObject::connect(m_process, SIGNAL(finished(int,QProcess::ExitStatus)),
+                         this, SLOT(onProcessFinished(int,QProcess::ExitStatus)));
+
     } else {
         this->logError("Couldn't start the bot.");
     }
@@ -393,8 +399,25 @@ void Player::sendGameState(PlanetWarsGame *game) {
 void Player::setLaunchCommand(QString launchCommand) {
     this->setLaunchCommand(launchCommand.toStdString());
 }
+
 void Player::setLaunchCommand(const std::string &launchCommand) {
     m_launchCommand = launchCommand;
+}
+
+void Player::readStdErr() {
+    if (NULL != m_process) {
+        QString qOutput(m_process->readAllStandardError());
+        this->logStdErr(qOutput.toStdString());
+    }
+}
+
+void Player::onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus) {
+    if (QProcess::CrashExit == exitStatus) {
+        this->logError("Bot process crashed.");
+    } else {
+        this->logMessage("Bot process exited.");
+    }
+
 }
 
 void Player::logMessage(const std::string &message) {

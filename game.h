@@ -238,6 +238,10 @@ public slots:
     void setLaunchCommand(QString launchCommand);
     void setLaunchCommand(const std::string& launchCommand);
 
+    //Slots to be used for receiving some data from the bot process.
+    void readStdErr();
+    void onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
+
 signals:
     //Log signals.
     void logMessage(const std::string& message, QObject* sender);
@@ -245,7 +249,7 @@ signals:
     void logStdErr(const std::string& message, QObject* sender);
 
 private:
-    //Signal wrappers
+    //Signal wrappers.
     void logMessage(const std::string& message);
     void logError(const std::string& message);
     void logStdErr(const std::string& message);
