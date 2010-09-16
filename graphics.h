@@ -79,6 +79,8 @@ public:
     QFont planetFleetFont;
 
     QPen planetPen;
+
+    qreal scalingFactor;
 };
 
 #endif // GRAPHICS_H

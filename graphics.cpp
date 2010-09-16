@@ -14,19 +14,24 @@
 PlanetWarsView::PlanetWarsView(QObject *parent)
     :QGraphicsScene(parent) {
 
+    const qreal scalingFactor = 23;
+
     //Set up the palette.
     m_settings = new GraphicsSettings(this);
     m_settings->backgroundColor.setRgb(0, 0, 0); //Black.
-    m_settings->firstPlayerColor.setRgb(232, 51, 73); //Red-ish.
-    m_settings->secondPlayerColor.setRgb(78, 167, 194); //Darker dirty cyan.
-    m_settings->neutralColor.setRgb(155,155,155);   //Grey.
+    m_settings->firstPlayerColor.setRgb(220, 0, 0); //Red-ish.
+    m_settings->secondPlayerColor.setRgb(26, 130, 186); //Darker dirty cyan.
+    m_settings->neutralColor.setRgb(80,80,80);   //Grey.
     m_settings->textColor.setRgb(255, 255, 255); //White.
 
-    m_settings->planetPen.setWidth(0.03);
+    m_settings->planetPen.setWidth(0.03 * scalingFactor);
 
-    m_settings->planetFleetFont.setPointSizeF(0.1);
+    m_settings->planetFleetFont.setPointSizeF(0.4 * scalingFactor);
     m_settings->planetFleetFont.setFamily("Arial");
-    m_settings->planetFleetFont.setLetterSpacing(QFont::AbsoluteSpacing, -0.5);
+    //m_settings->planetFleetFont.setLetterSpacing(QFont::AbsoluteSpacing,
+    //                                             -0.5 * scalingFactor);
+
+    m_settings->scalingFactor = scalingFactor;
 
     //Set up the graphics scene.
     this->setBackgroundBrush(m_settings->backgroundColor);
@@ -51,8 +56,8 @@ void PlanetWarsView::reset() {
 
     for (int i = 0; i < numPlanets; ++i) {
         PlanetView* planetView = new PlanetView();
-        planetView->setPlanet(planets[i]);
         planetView->setSettings(m_settings);
+        planetView->setPlanet(planets[i]);
 
         this->addItem(planetView);
         m_planetViews.push_back(planetView);
@@ -78,9 +83,12 @@ void PlanetView::setPlanet(Planet *planet) {
     //Set the radius.
     const qreal growthRate = static_cast<qreal>(planet->getGrowthRate());
     m_radius = 0.6 + growthRate / 8;
+    m_radius *= m_settings->scalingFactor;
 
     //Set the position.
-    this->setPos(m_planet->getX(), m_planet->getY());
+    const qreal x = m_planet->getX() * m_settings->scalingFactor;
+    const qreal y = m_planet->getY() * m_settings->scalingFactor;
+    this->setPos(x, y);
 }
 
 QRectF PlanetView::boundingRect() const {

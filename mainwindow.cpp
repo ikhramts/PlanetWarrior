@@ -68,7 +68,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QGraphicsView* gameView = this->findChild<QGraphicsView*>("gameView");
     gameView->setScene(planetWarsView);
     QObject::connect(m_game, SIGNAL(wasReset()), planetWarsView, SLOT(reset()));
-    gameView->scale(16,16);
 }
 
 MainWindow::~MainWindow()
