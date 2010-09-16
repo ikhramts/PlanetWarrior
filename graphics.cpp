@@ -14,7 +14,7 @@
 PlanetWarsView::PlanetWarsView(QObject *parent)
     :QGraphicsScene(parent) {
 
-    const qreal scalingFactor = 23;
+    const qreal scalingFactor = 22;
 
     //Set up the palette.
     m_settings = new GraphicsSettings(this);
