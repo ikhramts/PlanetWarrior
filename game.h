@@ -17,6 +17,7 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include <list>
 #include <string>
 #include <vector>
 #include <QtCore>
@@ -30,6 +31,8 @@ class PlanetWarsGame;
 class Planet;
 class Fleet;
 class Player;
+
+typedef std::list<Fleet*> FleetList;
 
 //A class responsible for keeping track of the game state.
 class PlanetWarsGame : public QObject {
@@ -56,7 +59,7 @@ public:
 
     //Game information.
     std::vector<Planet*> getPlanets() const     {return m_planets;}
-    std::vector<Fleet*> getFleets() const       {return m_fleets;}
+    FleetList getFleets() const                 {return m_fleets;}
     int getWinner() const                       {return m_winner;}
 
     //Get the fleets that have appeared on the most recent turn.
@@ -95,7 +98,9 @@ public slots:
 
     //Slots for accepting timer settings.
     void setTurnLength(int turnLength)          {m_turnLength = turnLength;}
+    void setFirstTurnLength(int firstTurnLength){m_firstTurnLength = firstTurnLength;}
     void setTimerIgnored(bool isTimerIgnored)   {m_isTimerIgnored = isTimerIgnored;}
+    void setMaxTurns(int maxTurns)              {m_maxTurns = maxTurns;}
 
     //Complete the step once the timer times out.
     void completeStep();
@@ -108,12 +113,18 @@ private:
     //Process messages from a player.  Return false if player made illegal moves, true otherwise.
     bool processOrders(const std::string& allOrders, Player* player);
 
+    //Advance the game, growing fleets and fighting battles.
+    void advanceGame();
+
+    //Increment the current turn and send a notification.
+    void incrementTurn();
+
     //Game objects.
     Player* m_firstPlayer;
     Player* m_secondPlayer;
     Player* m_neutralPlayer;
     std::vector<Planet*> m_planets;
-    std::vector<Fleet*> m_fleets;
+    FleetList m_fleets;
     std::vector<Fleet*> m_newFleets;    //Fleets that appeared at last turn.
 
     //General game state.
@@ -126,8 +137,10 @@ private:
 
     //Timer.
     QTimer* m_timer;
+    int m_firstTurnLength;
     int m_turnLength;
     bool m_isTimerIgnored;
+    int m_maxTurns;
 };
 
 //A class representing a planet.
@@ -144,6 +157,7 @@ public:
     void setGrowthRate(int growthRate)  { m_growthRate = growthRate;}
     void setOwner(Player* player);
     void setNumShips(int numShips);
+    void setGame(PlanetWarsGame* game)  {m_game = game;}
 
     int getId() const                   { return m_id;}
     double getX() const                 { return m_x;}
@@ -156,8 +170,8 @@ public:
     //Advance a turn by growing new fleets on the planet.
     void growFleets();
 
-    //Subtract ships from a planet.
-    void subtractShips(int numShips);
+    //Welcome (or fight) all fleets that arrived during this turn.
+    void welcomeArrivedFleets();
 
     //Handle arrival of a fleet.
     void landFleet(Fleet* fleet);
@@ -173,6 +187,9 @@ private:
     double m_y;
     int m_numShips;
     int m_growthRate;
+    PlanetWarsGame* m_game;
+
+    std::vector<Fleet*> m_landedFleets;
 
 };
 
@@ -237,6 +254,7 @@ class Player : public QObject {
 
 public:
     Player(QObject* parent);
+    ~Player();
 
     void setId(int id)      { m_id = id;}
 

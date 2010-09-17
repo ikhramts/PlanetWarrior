@@ -130,13 +130,22 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //Connect the timer settings to the game engine.
     QSpinBox* turnLength = this->findChild<QSpinBox*>("turnLength");
+    QSpinBox* firstTurnLength = this->findChild<QSpinBox*>("firstTurnLength");
     QCheckBox* ignoreTimer = this->findChild<QCheckBox*>("ignoreTimer");
+    QSpinBox* maxTurns = this->findChild<QSpinBox*>("maxTurns");
 
     m_game->setTurnLength(turnLength->value());
+    m_game->setFirstTurnLength(firstTurnLength->value());
     m_game->setTimerIgnored(ignoreTimer->isChecked());
+    m_game->setMaxTurns(maxTurns->value());
 
     QObject::connect(turnLength, SIGNAL(valueChanged(int)), m_game, SLOT(setTurnLength(int)));
+    QObject::connect(firstTurnLength, SIGNAL(valueChanged(int)), m_game, SLOT(setFirstTurnLength(int)));
     QObject::connect(ignoreTimer, SIGNAL(clicked(bool)), m_game, SLOT(setTimerIgnored(bool)));
+    QObject::connect(maxTurns, SIGNAL(valueChanged(int)), m_game, SLOT(setMaxTurns(int)));
+
+    QObject::connect(ignoreTimer, SIGNAL(clicked(bool)), turnLength, SLOT(setDisabled(bool)));
+    QObject::connect(ignoreTimer, SIGNAL(clicked(bool)), firstTurnLength, SLOT(setDisabled(bool)));
 }
 
 MainWindow::~MainWindow()

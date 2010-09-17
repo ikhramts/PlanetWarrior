@@ -70,7 +70,7 @@ void PlanetWarsGame::reset() {
     //Attempt to parse the map.
     bool failed = false;
     std::vector<Planet*> planets;
-    std::vector<Fleet*> fleets;
+    std::list<Fleet*> fleets;
 
     //Lines on which we find fleets.
     std::vector<size_t> fleetLines;
@@ -113,6 +113,7 @@ void PlanetWarsGame::reset() {
             planet->setNumShips(atoi(tokens[4].c_str()));
             planet->setGrowthRate(atoi(tokens[5].c_str()));
             planet->setId(planets.size());
+            planet->setGame(this);
 
             planets.push_back(planet);
 
@@ -148,20 +149,21 @@ void PlanetWarsGame::reset() {
         }
     }
 
-    const int numFleets = static_cast<int>(fleets.size());
     const int numPlanets = static_cast<int>(planets.size());
 
     //Resolve planet references inside fleets.
+    int fleetIndex = 0;
+
     if (!failed) {
-        for (int i = 0; i < numFleets; ++i) {
-            Fleet* fleet = fleets[i];
+        for (FleetList::iterator it = fleets.begin(); it != fleets.end(); ++it) {
+            Fleet* fleet = *it;
 
             //Attempt to resolve the source planet.
             const int sourceId = fleet->getSourceId();
 
             if (sourceId < 0 || sourceId >= numPlanets) {
                 std::stringstream message;
-                message << "Map file error [line " << fleetLines[i]
+                message << "Map file error [line " << fleetLines[fleetIndex]
                         << "]: fleet refers to an invalid planet with id=" << sourceId << ".";
                 this->logError(message.str());
                 failed = true;
@@ -176,7 +178,7 @@ void PlanetWarsGame::reset() {
 
             if (destinationId < 0 || destinationId >= numPlanets) {
                 std::stringstream message;
-                message << "Map file error [line " << fleetLines[i]
+                message << "Map file error [line " << fleetLines[fleetIndex]
                         << "]: fleet refers to an invalid planet with id=" << destinationId << ".";
                 this->logError(message.str());
                 failed = true;
@@ -185,33 +187,34 @@ void PlanetWarsGame::reset() {
             } else {
                 fleet->setSource(planets[sourceId]);
             }
+
+            ++fleetIndex;
         }
     }
 
     if (failed) {
         //Clean up.
         for (int i = 0; i < numPlanets; ++i) delete planets[i];
-        for (int i = 0; i < numFleets; ++i) delete fleets[i];
+        for (FleetList::iterator it = fleets.begin(); it != fleets.end(); ++it) delete *it;
 
         return;
     }
 
     //If didn't fail, replace the old planets and fleets with the new.
     const int numOldPlanets = static_cast<int>(m_planets.size());
-    const int numOldFleets = static_cast<int>(m_fleets.size());
     for (int i = 0; i < numOldPlanets; ++i) delete m_planets[i];
-    for (int i = 0; i < numOldFleets; ++i) delete m_fleets[i];
+    for (FleetList::iterator it = m_fleets.begin(); it != m_fleets.end(); ++it) delete (*it);
 
     m_planets = planets;
     m_fleets = fleets;
-    m_newFleets = fleets;
+    m_newFleets.insert(m_newFleets.end(), fleets.begin(), fleets.end());
 
     //Reset all flags and counters.
     m_state = RESET;
-    m_turn = 1;
+    m_turn = 0;
 
     //Notify everyone of the resetn
-    this->logMessage("Game reloaded.");
+    this->logMessage("================= Game reset. ==================");
     emit wasReset();
 }
 
@@ -236,6 +239,8 @@ void PlanetWarsGame::step() {
     if (STOPPED == m_state || STEPPING == m_state) {
         return;
     }
+
+    this->incrementTurn();
 
     //On the first turn, launch the player bots.
     if (RESET == m_state) {
@@ -266,7 +271,12 @@ void PlanetWarsGame::step() {
 
     } else {
         //Set the timer; once the turn is over, completeStep() will be called.
-        m_timer->start(m_turnLength);
+        if (1 == m_turn) {
+            m_timer->start(m_firstTurnLength);
+
+        } else {
+            m_timer->start(m_turnLength);
+        }
     }
 }
 
@@ -288,8 +298,77 @@ void PlanetWarsGame::completeStep() {
     bool isFirstPlayerRunning = this->processOrders(firstPlayerOutput, m_firstPlayer);
     bool isSecondPlayerRunning = this->processOrders(secondPlayerOutput, m_secondPlayer);
 
-    //Advance the planets and fleets.
-    //TODO: implement.
+    //Check whether the players are still alive.
+    if (!isFirstPlayerRunning || !isSecondPlayerRunning) {
+        this->stop();
+        return;
+    }
+
+    this->advanceGame();
+
+    //Check each player's position.
+    int firstPlayerShips = 0;
+    int secondPlayerShips = 0;
+
+    const int numPlanets = static_cast<int>(m_planets.size());
+
+    for (int i = 0; i < numPlanets; ++i) {
+        Planet* planet = m_planets[i];
+        const int ownerId = planet->getOwner()->getId();
+
+        if (1 == ownerId) {
+            firstPlayerShips += planet->getNumShips();
+
+        } else if (2 == ownerId) {
+            secondPlayerShips += planet->getNumShips();
+        }
+    }
+
+    for (FleetList::iterator it = m_fleets.begin(); it != m_fleets.end(); ++it) {
+        Fleet* fleet = *it;
+
+        if (1 == fleet->getOwner()->getId()) {
+            firstPlayerShips += fleet->getNumShips();
+
+        } else {
+            secondPlayerShips += fleet->getNumShips();
+        }
+    }
+
+    //Check for game end conditions.
+    if (firstPlayerShips == 0 && secondPlayerShips == 0) {
+        this->logMessage("Draw.");
+        this->stop();
+        return;
+
+    } else if (firstPlayerShips == 0) {
+        this->logMessage("Player 2 wins.");
+        this->stop();
+        return;
+
+    } else if (secondPlayerShips == 0) {
+        this->logMessage("Player 1 wins.");
+        this->stop();
+        return;
+    }
+
+    if (m_turn >= m_maxTurns) {
+        if (firstPlayerShips > secondPlayerShips) {
+            this->logMessage("Player 1 wins.");
+            this->stop();
+            return;
+
+        } else if (firstPlayerShips < secondPlayerShips) {
+            this->logMessage("Player 2 wins.");
+            this->stop();
+            return;
+
+        } else {
+            this->logMessage("Draw.");
+            this->stop();
+            return;
+        }
+    }
 }
 
 bool PlanetWarsGame::processOrders(const std::string &allOrders, Player *player) {
@@ -307,7 +386,7 @@ bool PlanetWarsGame::processOrders(const std::string &allOrders, Player *player)
             //Skip empty lines.
             continue;
 
-        } else if (line.compare("go")) {
+        } else if (line.compare("go") == 0) {
             foundGo = true;
             break;
         }
@@ -357,7 +436,7 @@ bool PlanetWarsGame::processOrders(const std::string &allOrders, Player *player)
         Planet* sourcePlanet = m_planets[sourcePlanetId];
         Planet* destinationPlanet = m_planets[destinationPlanetId];
 
-        if (destinationPlanet->getOwner()->getId() != player->getId()) {
+        if (sourcePlanet->getOwner()->getId() != player->getId()) {
             std::stringstream message;
             message << "Error on line " << i << " of stdout output.  Source planet "
                     << destinationPlanetId << " does not belong to this player.";
@@ -374,11 +453,14 @@ bool PlanetWarsGame::processOrders(const std::string &allOrders, Player *player)
             return false;
         }
 
+        sourcePlanet->setNumShips(sourcePlanet->getNumShips() - numShips);
+
         //Create a new fleet.
         Fleet* fleet = new Fleet(this);
         fleet->setOwner(player);
         fleet->setSource(sourcePlanet);
         fleet->setDestination(destinationPlanet);
+        fleet->setNumShips(numShips);
         const int distance = sourcePlanet->getDistanceTo(destinationPlanet);
         fleet->setTotalTripLength(distance);
         fleet->setTurnsRemaining(distance);
@@ -395,6 +477,41 @@ bool PlanetWarsGame::processOrders(const std::string &allOrders, Player *player)
     }
 
     return true;
+}
+
+void PlanetWarsGame::advanceGame() {
+    //Make planets grow ships.
+    const int numPlanets = static_cast<int>(m_planets.size());
+
+    for (int i = 0; i < numPlanets; ++i) {
+        m_planets[i]->growFleets();
+    }
+
+    //Advance fleets.
+    for (FleetList::iterator it = m_fleets.begin(); it != m_fleets.end(); ++it) {
+        (*it)->advance();
+    }
+
+    //Welcome (or fight) the arrived fleets.
+    for (int i = 0; i < numPlanets; ++i) {
+        m_planets[i]->welcomeArrivedFleets();
+    }
+
+    //Clean up arrived fleets.
+    FleetList::iterator itFleet = m_fleets.begin();
+
+    while (itFleet != m_fleets.end()) {
+        FleetList::iterator itCurrent = itFleet;
+        ++itFleet;
+
+        Fleet* fleet = (*itCurrent);
+
+        if (fleet->getTurnsRemaining() <= 0) {
+            delete fleet;
+            m_fleets.erase(itCurrent);
+
+        }
+    }
 }
 
 void PlanetWarsGame::run() {
@@ -423,7 +540,6 @@ void PlanetWarsGame::setMapFileName(QString mapFileName) {
 std::string PlanetWarsGame::toString(Player* pov) const {
     std::stringstream gameState;
     const int numPlanets = static_cast<int>(m_planets.size());
-    const int numFleets = static_cast<int>(m_fleets.size());
 
     //Write the planets.
     for (int i = 0; i < numPlanets; ++i) {
@@ -437,8 +553,8 @@ std::string PlanetWarsGame::toString(Player* pov) const {
     }
 
     //Write the fleets.
-    for (int i = 0; i < numFleets; ++i) {
-        Fleet* fleet = m_fleets[i];
+    for (FleetList::const_iterator it = m_fleets.begin(); it != m_fleets.end(); ++it) {
+        Fleet* fleet = (*it);
         gameState << "F " << pov->povId(fleet->getOwner())
                 << " " << fleet->getNumShips()
                 << " " << fleet->getSource()->getId()
@@ -460,6 +576,13 @@ void PlanetWarsGame::logMessage(const std::string &message) {
 
 void PlanetWarsGame::logError(const std::string &message) {
     emit logError(message, this);
+}
+
+void PlanetWarsGame::incrementTurn() {
+    ++m_turn;
+    std::stringstream message;
+    message << "Turn " << m_turn;
+    this->logMessage(message.str());
 }
 
 /*===================================================
@@ -487,17 +610,65 @@ int Planet::getDistanceTo(Planet *planet) const {
 }
 
 void Planet::growFleets() {
-    m_numShips += m_growthRate;
-    emit numShipsSet(m_numShips);
+    //Grow fleets only on non-neutral planets.
+    if (m_owner->getId() != 0) {
+        m_numShips += m_growthRate;
+        emit numShipsSet(m_numShips);
+    }
 }
 
-void Planet::subtractShips(int numShips) {
-    m_numShips -= numShips;
-    emit numShipsSet(m_numShips);
+void Planet::welcomeArrivedFleets() {
+    const int ownerId = m_owner->getId();
+
+    //Tally up the ships for each force.
+    const int numArrivedFleets = static_cast<int>(m_landedFleets.size());
+
+    if (numArrivedFleets == 0) {
+        return;
+    }
+
+    int playerShips[3];
+    playerShips[0] = (ownerId == 0) ? m_numShips : 0;
+    playerShips[1] = (ownerId == 1) ? m_numShips : 0;
+    playerShips[2] = (ownerId == 2) ? m_numShips : 0;
+
+    for (int i = 0; i < numArrivedFleets; ++i) {
+        Fleet* fleet = m_landedFleets[i];
+        playerShips[fleet->getOwner()->getId()] += fleet->getNumShips();
+    }
+
+    m_landedFleets.clear();
+
+    //Check who won.
+    //Check whether the owner stays the same.
+    if (playerShips[ownerId] >= std::max(playerShips[(ownerId+1)%3], playerShips[(ownerId+2)%3])) {
+        this->setNumShips(playerShips[ownerId]
+                          - std::max(playerShips[(ownerId+1)%3], playerShips[(ownerId+2)%3]));
+        return;
+    }
+
+    //Otherwise, find the new owner.
+    if (playerShips[1] > playerShips[2]) {
+        this->setOwner(m_game->getFirstPlayer());
+        const int remainingShips = playerShips[1] - std::max(playerShips[2], playerShips[0]);
+        this->setNumShips(remainingShips);
+
+    } else if (playerShips[2] > playerShips[1]) {
+        this->setOwner(m_game->getSecondPlayer());
+        const int remainingShips = playerShips[2] - std::max(playerShips[1], playerShips[0]);
+        this->setNumShips(remainingShips);
+
+    } else if (ownerId == 0 && playerShips[2] == playerShips[1]) {
+        //The invading fleets are larger than the neutral planet, but equal in size.
+        //Planet stays neutral.
+        this->setNumShips(0);
+    }
+
+    //There should be no other cases.
 }
 
 void Planet::landFleet(Fleet *fleet) {
-    //TODO: implement.
+    m_landedFleets.push_back(fleet);
 }
 
 /*===================================================
@@ -508,10 +679,32 @@ Fleet::Fleet(QObject *parent)
 }
 
 void Fleet::setTurnsRemaining(int turnsRemaining) {
-    //TODO: include updating the position.
     m_turnsRemaining = turnsRemaining;
 
-    //emit positionChanged(...)
+    //Update the position change.
+    const double sourceX = m_source->getX();
+    const double sourceY = m_source->getY();
+    const double destinationX = m_destination->getX();
+    const double destinationY = m_destination->getY();
+    const double tripLength = static_cast<double>(m_totalTripLength);
+    const double travelled = static_cast<double>(m_totalTripLength - turnsRemaining);
+
+    const double tripDx = destinationX - sourceX;
+    const double tripDy = destinationY - sourceY;
+
+    const double x = sourceX + tripDx * tripLength / travelled;
+    const double y = sourceY + tripDy * tripLength / travelled;
+
+    emit positionChanged(x, y);
+}
+
+void Fleet::advance() {
+    this->setTurnsRemaining(--m_turnsRemaining);
+
+    if (m_turnsRemaining <= 0) {
+        //Arrived.
+        m_destination->landFleet(this);
+    }
 }
 
 /*===================================================
@@ -519,6 +712,10 @@ void Fleet::setTurnsRemaining(int turnsRemaining) {
 ====================================================*/
 Player::Player(QObject *parent)
     :QObject(parent), m_is_started(false), m_is_alive(false), m_process(NULL) {
+}
+
+Player::~Player() {
+    this->stop();
 }
 
 void Player::start() {
