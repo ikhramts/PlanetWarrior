@@ -36,6 +36,9 @@ PlanetWarsGame::PlanetWarsGame(QObject* parent)
     m_firstPlayer->setId(1);
     m_secondPlayer->setId(2);
 
+    QObject::connect(m_firstPlayer, SIGNAL(receivedStdOut()), this, SLOT(checkPlayerResponses()));
+    QObject::connect(m_secondPlayer, SIGNAL(receivedStdOut()), this, SLOT(checkPlayerResponses()));
+
     //Set object names.
     this->setObjectName("Game Engine");
     m_firstPlayer->setObjectName("Player 1");
@@ -48,7 +51,13 @@ PlanetWarsGame::PlanetWarsGame(QObject* parent)
 
     //Initialize the timer.
     m_timer = new QTimer(this);
+    m_timer->setSingleShot(true);
     QObject::connect(m_timer, SIGNAL(timeout()), this, SLOT(checkPlayerResponses()));
+
+    //Initialize the run mode timer.
+    m_runTimer = new QTimer(this);
+    m_runTimer->setSingleShot(true);
+    QObject::connect(m_runTimer, SIGNAL(timeout()), this, SLOT(continueRunning()));
 }
 
 void PlanetWarsGame::reset() {
@@ -317,7 +326,7 @@ void PlanetWarsGame::completeStep() {
         return;
     }
 
-    m_state = READY;
+    m_state = PROCESSING;
 
     //Clear the old new fleets.
     m_newFleets.clear();
@@ -400,6 +409,10 @@ void PlanetWarsGame::completeStep() {
             return;
         }
     }
+
+    //Game is not over.
+    m_state = READY;
+    this->continueRunning();
 }
 
 bool PlanetWarsGame::processOrders(const std::string &allOrders, Player *player) {
@@ -546,11 +559,12 @@ void PlanetWarsGame::advanceGame() {
 }
 
 void PlanetWarsGame::run() {
-    //TODO: implement.
+    m_runningState = RUNNING;
+    this->continueRunning();
 }
 
 void PlanetWarsGame::pause() {
-    //TODO: implement.
+    m_runningState = PAUSED;
 }
 
 void PlanetWarsGame::stop() {
@@ -566,6 +580,25 @@ void PlanetWarsGame::stop() {
 
 void PlanetWarsGame::setMapFileName(QString mapFileName) {
     m_mapFileName = mapFileName.toStdString();
+}
+
+void PlanetWarsGame::continueRunning() {
+    //Proceed only if the game is in "running" state.
+    if (PAUSED == m_runningState) {
+        return;
+    }
+
+    //Check whether the step has completed, or the pause has not passed.  If not, come back later.
+    if (READY != m_state && RESET != m_state) {
+        return;
+
+    } else if (m_runTimer->isActive()) {
+        return;
+    }
+
+    //Go on to the next step.
+    this->step();
+    m_runTimer->start(1000);
 }
 
 std::string PlanetWarsGame::toString(Player* pov) const {
@@ -850,6 +883,8 @@ void Player::readStdOut() {
 
     m_stdoutBuffer.append(contents);
     this->logStdOut(contents);
+
+    emit receivedStdOut();
 }
 
 void Player::readStdErr() {

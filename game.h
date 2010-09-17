@@ -41,19 +41,18 @@ class PlanetWarsGame : public QObject {
 public:
     //Possible states for the game engine.
     enum GameState {
+        NOT_RUN,
         STOPPED,
         RESET,
         READY,
-        STEPPING
+        STEPPING,
+        PROCESSING,
     };
 
     enum RunningState {
         RUNNING,
         PAUSED,
     };
-
-    static const int TURN_LENGTH = 1000; //milliseconds
-    static const int MAX_TURMS = 200;
 
     PlanetWarsGame(QObject* parent);
 
@@ -113,6 +112,9 @@ public slots:
     //Check whether it's time to complete the turn.
     void checkPlayerResponses();
 
+    //Callback function for running the game.
+    void continueRunning();
+
 private:
     //Signal wrappers
     void logMessage(const std::string& message);
@@ -137,7 +139,6 @@ private:
 
     //General game state.
     GameState m_state;
-    RunningState m_runningState;
     int m_turn;
     int m_winner;   //-1 = game not over; 0 = draw; 1 = player 1; 2 = player 2.
 
@@ -149,6 +150,11 @@ private:
     int m_turnLength;
     bool m_isTimerIgnored;
     int m_maxTurns;
+
+    //Run state settings.
+    RunningState m_runningState;
+    QTimer* m_runTimer;
+
 };
 
 //A class representing a planet.
@@ -314,6 +320,8 @@ signals:
     void logStdErr(const std::string& message, QObject* sender);
     void logStdIn(const std::string& message, QObject* sender);
     void logStdOut(const std::string& message, QObject* sender);
+
+    void receivedStdOut();
 
 private:
     int m_id;

@@ -78,7 +78,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //Set up the logger
     QTextEdit* logOutput = this->findChild<QTextEdit*>("logOutput");
-    Logger* logger = new Logger(this);
+    Logger* logger = new Logger(logOutput);
     m_logger = logger;
     logger->setLogOutput(logOutput);
 
@@ -173,7 +173,6 @@ MainWindow::MainWindow(QWidget *parent) :
     logSecondPlayerStdIn->setChecked(settings.value("logSecondPlayerStdIn", false).toBool());
     logSecondPlayerStdOut->setChecked(settings.value("logSecondPlayerStdOut", false).toBool());
     logSecondPlayerStdErr->setChecked(settings.value("logSecondPlayerStdErr", false).toBool());
-
 }
 
 MainWindow::~MainWindow()
