@@ -10,12 +10,13 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QCloseEvent>
 #include <QFileDialog>
 #include <QMainWindow>
 
 //Forward-declared classes.
 class PlanetWarsGame;
-
+class Logger;
 
 namespace Ui {
     class MainWindow;
@@ -39,12 +40,16 @@ private slots:
     void on_browseSecondBotButton_clicked();
     void on_browseFirstBotButton_clicked();
 
+protected:
+    void closeEvent(QCloseEvent *);
+
 private:
     QFileDialog* m_browseFirstBotDialog;
     QFileDialog* m_browseSecondBotDialog;
     QFileDialog* m_browseMapBotDialog;
 
     PlanetWarsGame* m_game;
+    Logger* m_logger;
 };
 
 #endif // MAINWINDOW_H

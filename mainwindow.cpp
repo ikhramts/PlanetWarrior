@@ -13,8 +13,9 @@
 #include <QGraphicsView>
 #include <QLabel>
 #include <QPushButton>
-#include <QTextEdit>
+#include <QSettings>
 #include <QSpinBox>
+#include <QTextEdit>
 #include "ui_mainwindow.h"
 #include "game.h"
 #include "graphics.h"
@@ -25,6 +26,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    //Initialize general application settings.
+    QString applicationName("PlanetWarrior");
+    QString organizationName("ikhramts");
+    QCoreApplication::setApplicationName(applicationName);
+    QCoreApplication::setOrganizationName(organizationName);
 
     //Initialize the browse file dialogs, connect them to appropriate text fields.
     m_browseFirstBotDialog = new QFileDialog(this);
@@ -72,6 +79,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //Set up the logger
     QTextEdit* logOutput = this->findChild<QTextEdit*>("logOutput");
     Logger* logger = new Logger(this);
+    m_logger = logger;
     logger->setLogOutput(logOutput);
 
     QPushButton* clearLogButton = this->findChild<QPushButton*>("clearLogButton");
@@ -146,6 +154,26 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QObject::connect(ignoreTimer, SIGNAL(clicked(bool)), turnLength, SLOT(setDisabled(bool)));
     QObject::connect(ignoreTimer, SIGNAL(clicked(bool)), firstTurnLength, SLOT(setDisabled(bool)));
+
+    //Load the settings.
+    QSettings settings("PlanetWarrior.ini", QSettings::IniFormat);
+
+    firstBotFile->setText(settings.value("firstPlayer", "").toString());
+    secondBotFile->setText(settings.value("secondPlayer", "").toString());
+    mapFile->setText(settings.value("mapFileName", "").toString());
+
+    turnLength->setValue(settings.value("turnLength", 1000).toInt());
+    firstTurnLength->setValue(settings.value("firstTurnLength", 3000).toInt());
+    ignoreTimer->setChecked(settings.value("isTimerIgnored", false).toBool());
+    maxTurns->setValue(settings.value("maxTurns", 200).toInt());
+
+    logFirstPlayerStdIn->setChecked(settings.value("logFirstPlayerStdIn", false).toBool());
+    logFirstPlayerStdOut->setChecked(settings.value("logFirstPlayerStdOut", false).toBool());
+    logFirstPlayerStdErr->setChecked(settings.value("logFirstPlayerStdErr", false).toBool());
+    logSecondPlayerStdIn->setChecked(settings.value("logSecondPlayerStdIn", false).toBool());
+    logSecondPlayerStdOut->setChecked(settings.value("logSecondPlayerStdOut", false).toBool());
+    logSecondPlayerStdErr->setChecked(settings.value("logSecondPlayerStdErr", false).toBool());
+
 }
 
 MainWindow::~MainWindow()
@@ -168,7 +196,28 @@ void MainWindow::on_browseMapFileButton_clicked()
     m_browseMapBotDialog->open();
 }
 
+void MainWindow::closeEvent(QCloseEvent* event) {
+    //Store the settings.
+    QSettings settings("PlanetWarrior.ini", QSettings::IniFormat);
 
+    settings.setValue("firstPlayer", m_game->getFirstPlayer()->getLaunchCommand().c_str());
+    settings.setValue("secondPlayer", m_game->getSecondPlayer()->getLaunchCommand().c_str());
+    settings.setValue("mapFileName", m_game->getMapFileName().c_str());
+
+    settings.setValue("turnLength", m_game->getTurnLength());
+    settings.setValue("firstTurnLength", m_game->getFirstTurnLength());
+    settings.setValue("isTimerIgnored", m_game->isTimerIgnored());
+    settings.setValue("maxTurns", m_game->getMaxTurns());
+
+    settings.setValue("logFirstPlayerStdIn", m_logger->isLoggingFirstPlayerStdIn());
+    settings.setValue("logFirstPlayerStdOut", m_logger->isLoggingFirstPlayerStdOut());
+    settings.setValue("logFirstPlayerStdErr", m_logger->isLoggingFirstPlayerStdErr());
+    settings.setValue("logSecondPlayerStdIn", m_logger->isLoggingSecondPlayerStdIn());
+    settings.setValue("logSecondPlayerStdOut", m_logger->isLoggingSecondPlayerStdOut());
+    settings.setValue("logSecondPlayerStdErr", m_logger->isLoggingSecondPlayerStdErr());
+
+    event->accept();
+}
 
 void MainWindow::on_playButton_clicked()
 {

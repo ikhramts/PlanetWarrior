@@ -34,6 +34,13 @@ public slots:
     void setLogSecondPlayerStdOut(bool doLog)   { m_logSecondPlayerStdOut = doLog;}
     void setLogSecondPlayerStdErr(bool doLog)   { m_logSecondPlayerStdErr = doLog;}
 
+    bool isLoggingFirstPlayerStdIn() const      { return m_logFirstPlayerStdIn;}
+    bool isLoggingFirstPlayerStdOut() const     { return m_logFirstPlayerStdOut;}
+    bool isLoggingFirstPlayerStdErr() const     { return m_logFirstPlayerStdErr;}
+    bool isLoggingSecondPlayerStdIn() const     { return m_logSecondPlayerStdIn;}
+    bool isLoggingSecondPlayerStdOut() const    { return m_logSecondPlayerStdOut;}
+    bool isLoggingSecondPlayerStdErr() const    { return m_logSecondPlayerStdErr;}
+
 private:
     //Message types:
     static const int MESSAGE = 0;

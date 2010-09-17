@@ -61,6 +61,11 @@ public:
     std::vector<Planet*> getPlanets() const     {return m_planets;}
     FleetList getFleets() const                 {return m_fleets;}
     int getWinner() const                       {return m_winner;}
+    std::string getMapFileName() const          {return m_mapFileName;}
+    int getFirstTurnLength() const              {return m_firstTurnLength;}
+    int getTurnLength() const                   {return m_turnLength;}
+    int isTimerIgnored() const                  {return m_isTimerIgnored;}
+    int getMaxTurns() const                     {return m_maxTurns;}
 
     //Get the fleets that have appeared on the most recent turn.
     std::vector<Fleet*> getNewFleets() const    {return m_newFleets;}
@@ -259,9 +264,10 @@ public:
     Player(QObject* parent);
     ~Player();
 
-    void setId(int id)      { m_id = id;}
+    void setId(int id)                      { m_id = id;}
 
-    int getId()             { return m_id;}
+    int getId() const                       { return m_id;}
+    std::string getLaunchCommand() const    { return m_launchCommand;}
 
     //Start the process.  Return true if successfull, false if not.
     void start();
