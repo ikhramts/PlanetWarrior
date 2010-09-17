@@ -123,17 +123,17 @@ MainWindow::MainWindow(QWidget *parent) :
     QCheckBox* logSecondPlayerStdOut = this->findChild<QCheckBox*>("logSecondPlayerStdOut");
     QCheckBox* logSecondPlayerStdErr = this->findChild<QCheckBox*>("logSecondPlayerStdErr");
 
-    QObject::connect(logFirstPlayerStdIn, SIGNAL(clicked(bool)),
+    QObject::connect(logFirstPlayerStdIn, SIGNAL(toggled(bool)),
                      logger, SLOT(setLogFirstPlayerStdIn(bool)));
-    QObject::connect(logFirstPlayerStdOut, SIGNAL(clicked(bool)),
+    QObject::connect(logFirstPlayerStdOut, SIGNAL(toggled(bool)),
                      logger, SLOT(setLogFirstPlayerStdOut(bool)));
-    QObject::connect(logFirstPlayerStdErr, SIGNAL(clicked(bool)),
+    QObject::connect(logFirstPlayerStdErr, SIGNAL(toggled(bool)),
                      logger, SLOT(setLogFirstPlayerStdErr(bool)));
-    QObject::connect(logSecondPlayerStdIn, SIGNAL(clicked(bool)),
+    QObject::connect(logSecondPlayerStdIn, SIGNAL(toggled(bool)),
                      logger, SLOT(setLogSecondPlayerStdIn(bool)));
-    QObject::connect(logSecondPlayerStdOut, SIGNAL(clicked(bool)),
+    QObject::connect(logSecondPlayerStdOut, SIGNAL(toggled(bool)),
                      logger, SLOT(setLogSecondPlayerStdOut(bool)));
-    QObject::connect(logSecondPlayerStdErr, SIGNAL(clicked(bool)),
+    QObject::connect(logSecondPlayerStdErr, SIGNAL(toggled(bool)),
                      logger, SLOT(setLogSecondPlayerStdErr(bool)));
 
     //Connect the timer settings to the game engine.
@@ -149,7 +149,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QObject::connect(turnLength, SIGNAL(valueChanged(int)), m_game, SLOT(setTurnLength(int)));
     QObject::connect(firstTurnLength, SIGNAL(valueChanged(int)), m_game, SLOT(setFirstTurnLength(int)));
-    QObject::connect(ignoreTimer, SIGNAL(clicked(bool)), m_game, SLOT(setTimerIgnored(bool)));
+    QObject::connect(ignoreTimer, SIGNAL(toggled(bool)), m_game, SLOT(setTimerIgnored(bool)));
     QObject::connect(maxTurns, SIGNAL(valueChanged(int)), m_game, SLOT(setMaxTurns(int)));
 
     QObject::connect(ignoreTimer, SIGNAL(clicked(bool)), turnLength, SLOT(setDisabled(bool)));
