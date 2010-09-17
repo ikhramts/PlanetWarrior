@@ -50,7 +50,7 @@ void Logger::recordStdOut(const std::string &message, QObject *sender) {
     this->recordLog(message, sender, Logger::STDOUT);
 }
 
-void Logger::recordLog(const std::string &message, QObject *sender, int messageType) {
+void Logger::recordLog(const std::string &message, QObject *sender, const int messageType) {
     QString senderName = sender->objectName();
 
     //Check whether we should be logging this.
@@ -75,7 +75,19 @@ void Logger::recordLog(const std::string &message, QObject *sender, int messageT
     //Compose the full messag string.
     QString qMessage(message.c_str());
     QString fullMessage;
-    fullMessage.append('[').append(senderName).append("]: ").append(qMessage);
+    fullMessage.append('[').append(senderName);
+
+    if (STDIN == messageType) {
+        fullMessage.append(" stdin");
+
+    } else if (STDOUT == messageType) {
+        fullMessage.append(" stdout");
+
+    } else if (STDERR == messageType) {
+        fullMessage.append(" stderr");
+    }
+
+    fullMessage.append("]: ").append(qMessage);
 
     //Select the appropriate font style.
     QColor color;
