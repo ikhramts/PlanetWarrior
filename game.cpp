@@ -15,6 +15,7 @@
 // Stores the game state.
 
 #include "game.h"
+#include <cmath>
 #include <fstream>
 #include <sstream>
 
@@ -277,12 +278,123 @@ void PlanetWarsGame::completeStep() {
 
     m_state = READY;
 
-    //Read the the responses from each of the players.
-    std::string firstPlayerMoves(m_firstPlayer->readCommands());
-    std::string secondPlayerMoves(m_secondPlayer->readCommands());
+    //Clear the old new fleets.
+    m_newFleets.clear();
 
-    //Parse the moves.
+    //Read and process the the responses from each of the players.
+    std::string firstPlayerOutput(m_firstPlayer->readCommands());
+    std::string secondPlayerOutput(m_secondPlayer->readCommands());
 
+    bool isFirstPlayerRunning = this->processOrders(firstPlayerOutput, m_firstPlayer);
+    bool isSecondPlayerRunning = this->processOrders(secondPlayerOutput, m_secondPlayer);
+
+    //Advance the planets and fleets.
+    //TODO: implement.
+}
+
+bool PlanetWarsGame::processOrders(const std::string &allOrders, Player *player) {
+    std::vector<std::string> lines = Tokenize(allOrders, "\r\n");
+    const int numLines = static_cast<int>(lines.size());
+
+    //Indicator whether "go" message was encountered.
+    bool foundGo = false;
+
+
+    for (int i = 0; i < numLines; ++i) {
+        std::string& line = lines[i];
+
+        if (line.size() == 0) {
+            //Skip empty lines.
+            continue;
+
+        } else if (line.compare("go")) {
+            foundGo = true;
+            break;
+        }
+
+        std::vector<std::string> tokens = Tokenize(line, " ");
+
+        //Check whether the player bot output a bad thing.
+        if (3 != tokens.size()) {
+            std::stringstream message;
+            message << "Error on line " << i << " of stdout output; expected 3 tokens on a move order line, have "
+                    << tokens.size() << ".";
+            player->logError(message.str());
+            return false;
+        }
+
+        const int sourcePlanetId = atoi(tokens[0].c_str());
+        const int destinationPlanetId = atoi(tokens[1].c_str());
+        const int numShips = atoi(tokens[2].c_str());
+
+        //Check whether the player has made any illegal moves.
+        const int numPlanets = static_cast<int>(m_planets.size());
+
+        if (sourcePlanetId < 0 || sourcePlanetId >= numPlanets) {
+            std::stringstream message;
+            message << "Error on line " << i << " of stdout output.  Source planet "
+                    << sourcePlanetId << " does not exist.";
+            player->logError(message.str());
+            return false;
+        }
+
+        if (destinationPlanetId < 0 || destinationPlanetId >= numPlanets) {
+            std::stringstream message;
+            message << "Error on line " << i << " of stdout output.  Destination planet "
+                    << destinationPlanetId << " does not exist.";
+            player->logError(message.str());
+            return false;
+        }
+
+        if (sourcePlanetId == destinationPlanetId) {
+            std::stringstream message;
+            message << "Error on line " << i
+                    << " of stdout output.  Source planet and destination planet are the same. ";
+            player->logError(message.str());
+            return false;
+        }
+
+        Planet* sourcePlanet = m_planets[sourcePlanetId];
+        Planet* destinationPlanet = m_planets[destinationPlanetId];
+
+        if (destinationPlanet->getOwner()->getId() != player->getId()) {
+            std::stringstream message;
+            message << "Error on line " << i << " of stdout output.  Source planet "
+                    << destinationPlanetId << " does not belong to this player.";
+            player->logError(message.str());
+            return false;
+        }
+
+        if (numShips > sourcePlanet->getNumShips() || numShips < 0) {
+            std::stringstream message;
+            message << "Error on line " << i << " of stdout output.  Cannot send " << numShips
+                    << " ships from planet " << sourcePlanetId
+                    << ".  Planet has " << sourcePlanet->getNumShips() << " ships.";
+            player->logError(message.str());
+            return false;
+        }
+
+        //Create a new fleet.
+        Fleet* fleet = new Fleet(this);
+        fleet->setOwner(player);
+        fleet->setSource(sourcePlanet);
+        fleet->setDestination(destinationPlanet);
+        const int distance = sourcePlanet->getDistanceTo(destinationPlanet);
+        fleet->setTotalTripLength(distance);
+        fleet->setTurnsRemaining(distance);
+
+        m_newFleets.push_back(fleet);
+        m_fleets.push_back(fleet);
+    }
+
+    if (!foundGo) {
+        std::stringstream message;
+        message << "Error: player did not send \"go\" within allotted time.";
+        player->logError(message.str());
+        return false;
+    }
+
+    return true;
 }
 
 void PlanetWarsGame::run() {
@@ -309,9 +421,37 @@ void PlanetWarsGame::setMapFileName(QString mapFileName) {
 }
 
 std::string PlanetWarsGame::toString(Player* pov) const {
-    //TODO: implement.
-    std::string result;
-    return result;
+    std::stringstream gameState;
+    const int numPlanets = static_cast<int>(m_planets.size());
+    const int numFleets = static_cast<int>(m_fleets.size());
+
+    //Write the planets.
+    for (int i = 0; i < numPlanets; ++i) {
+        Planet* planet = m_planets[i];
+        gameState << "P " << planet->getX()
+                << " " << planet->getY()
+                << " " << pov->povId(planet->getOwner())
+                << " " << planet->getNumShips()
+                << " " << planet->getGrowthRate()
+                << std::endl;
+    }
+
+    //Write the fleets.
+    for (int i = 0; i < numFleets; ++i) {
+        Fleet* fleet = m_fleets[i];
+        gameState << "F " << pov->povId(fleet->getOwner())
+                << " " << fleet->getNumShips()
+                << " " << fleet->getSource()->getId()
+                << " " << fleet->getDestination()->getId()
+                << " " << fleet->getTotalTripLength()
+                << " " << fleet->getTurnsRemaining()
+                << std::endl;
+    }
+
+    gameState << "go" << std::endl;
+
+    return gameState.str();
+
 }
 
 void PlanetWarsGame::logMessage(const std::string &message) {
@@ -339,8 +479,20 @@ void Planet::setNumShips(int numShips) {
     emit numShipsSet(m_numShips);
 }
 
+int Planet::getDistanceTo(Planet *planet) const {
+    const double dx = planet->m_x - this->m_x;
+    const double dy = planet->m_y - this->m_y;
+    const int distance = static_cast<int>(ceil(sqrt(dx*dx + dy*dy)));
+    return distance;
+}
+
 void Planet::growFleets() {
     m_numShips += m_growthRate;
+    emit numShipsSet(m_numShips);
+}
+
+void Planet::subtractShips(int numShips) {
+    m_numShips -= numShips;
     emit numShipsSet(m_numShips);
 }
 
@@ -385,6 +537,8 @@ void Player::start() {
         this->logMessage("Bot process started.");
 
         //Make some signal/slot connections.
+        QObject::connect(m_process, SIGNAL(readyReadStandardOutput()),
+                         this, SLOT(readStdOut()));
         QObject::connect(m_process, SIGNAL(readyReadStandardError()),
                          this, SLOT(readStdErr()));
         QObject::connect(m_process, SIGNAL(finished(int,QProcess::ExitStatus)),
@@ -415,8 +569,9 @@ void Player::stop() {
 }
 
 std::string Player::readCommands() {
-    //TODO: implement.
-    std::string commands;
+    //Return everything accumulated in the stdout buffer.
+    std::string commands(m_stdoutBuffer);
+    m_stdoutBuffer.clear();
     return commands;
 }
 
@@ -428,8 +583,23 @@ bool Player::isRunning() const {
     return true;
 }
 
-void Player::sendGameState(PlanetWarsGame *game) {
-    //TODO: implement.
+void Player::sendGameState(const std::string& gameState) {
+    if (this->isRunning()) {
+        m_process->write(gameState.c_str());
+        this->logStdIn(gameState);
+    }
+}
+
+int Player::povId(Player *player) const {
+    const int playerId = player->getId();
+
+    if (0 == playerId) {
+        return 0;
+    } else if (playerId != m_id) {
+        return 2;
+    } else {
+        return 1;
+    }
 }
 
 void Player::setLaunchCommand(QString launchCommand) {
@@ -438,6 +608,15 @@ void Player::setLaunchCommand(QString launchCommand) {
 
 void Player::setLaunchCommand(const std::string &launchCommand) {
     m_launchCommand = launchCommand;
+}
+
+void Player::readStdOut() {
+    //Append the contents to the stdout buffer.
+    QString qContents(m_process->readAllStandardOutput());
+    std::string contents(qContents.toStdString());
+
+    m_stdoutBuffer.append(contents);
+    this->logStdOut(contents);
 }
 
 void Player::readStdErr() {
@@ -466,5 +645,13 @@ void Player::logError(const std::string &message) {
 
 void Player::logStdErr(const std::string &message) {
     emit logStdErr(message, this);
+}
+
+void Player::logStdIn(const std::string &message) {
+    emit logStdIn(message, this);
+}
+
+void Player::logStdOut(const std::string &message) {
+    emit logStdOut(message, this);
 }
 

@@ -105,6 +105,9 @@ private:
     void logMessage(const std::string& message);
     void logError(const std::string& message);
 
+    //Process messages from a player.  Return false if player made illegal moves, true otherwise.
+    bool processOrders(const std::string& allOrders, Player* player);
+
     //Game objects.
     Player* m_firstPlayer;
     Player* m_secondPlayer;
@@ -148,9 +151,13 @@ public:
     int getGrowthRate() const           { return m_growthRate;}
     Player* getOwner() const            { return m_owner;}
     int getNumShips() const             { return m_numShips;}
+    int getDistanceTo(Planet* planet) const;
 
     //Advance a turn by growing new fleets on the planet.
     void growFleets();
+
+    //Subtract ships from a planet.
+    void subtractShips(int numShips);
 
     //Handle arrival of a fleet.
     void landFleet(Fleet* fleet);
@@ -250,12 +257,23 @@ public:
     //Send updated map to the player process.
     void sendGameState(const std::string& gameState);
 
+    //Return player's POV from point of view of another player.
+    int povId(Player* player) const;
+
+    //Signal wrappers.
+    void logMessage(const std::string& message);
+    void logError(const std::string& message);
+    void logStdErr(const std::string& message);
+    void logStdIn(const std::string& message);
+    void logStdOut(const std::string& message);
+
 public slots:
     //Set the shell command used to launch the AI bot.
     void setLaunchCommand(QString launchCommand);
     void setLaunchCommand(const std::string& launchCommand);
 
     //Slots to be used for receiving some data from the bot process.
+    void readStdOut();
     void readStdErr();
     void onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
 
@@ -268,16 +286,12 @@ signals:
     void logStdOut(const std::string& message, QObject* sender);
 
 private:
-    //Signal wrappers.
-    void logMessage(const std::string& message);
-    void logError(const std::string& message);
-    void logStdErr(const std::string& message);
-
     int m_id;
     bool m_is_started;
     bool m_is_alive;
     std::string m_launchCommand; //The shell command used to launch the AI bot.
     QProcess* m_process;
+    std::string m_stdoutBuffer;   //A place for temporary storage of stdout output.
 
 };
 
