@@ -105,6 +105,9 @@ public slots:
     //Complete the step once the timer times out.
     void completeStep();
 
+    //Check whether it's time to complete the turn.
+    void checkPlayerResponses();
+
 private:
     //Signal wrappers
     void logMessage(const std::string& message);
@@ -285,6 +288,9 @@ public:
     void logStdIn(const std::string& message);
     void logStdOut(const std::string& message);
 
+    //Check whether the player is done the turn.
+    bool isDoneTurn();
+
 public slots:
     //Set the shell command used to launch the AI bot.
     void setLaunchCommand(QString launchCommand);
@@ -310,6 +316,7 @@ private:
     std::string m_launchCommand; //The shell command used to launch the AI bot.
     QProcess* m_process;
     std::string m_stdoutBuffer;   //A place for temporary storage of stdout output.
+    bool m_isDoneTurn;
 
 };
 

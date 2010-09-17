@@ -48,7 +48,7 @@ PlanetWarsGame::PlanetWarsGame(QObject* parent)
 
     //Initialize the timer.
     m_timer = new QTimer(this);
-    QObject::connect(m_timer, SIGNAL(timeout()), this, SLOT(completeStep()));
+    QObject::connect(m_timer, SIGNAL(timeout()), this, SLOT(checkPlayerResponses()));
 }
 
 void PlanetWarsGame::reset() {
@@ -266,16 +266,47 @@ void PlanetWarsGame::step() {
     m_state = STEPPING;
 
     if (m_isTimerIgnored) {
-        //Complete the turn right away.
-        this->completeStep();
+        //Check every once in a while whether the players are done.
+        m_timer->start(100);
 
     } else {
-        //Set the timer; once the turn is over, completeStep() will be called.
+        //Set the timer; once the turn is over, checkPlayerResponses() will be called.
         if (1 == m_turn) {
             m_timer->start(m_firstTurnLength);
 
         } else {
             m_timer->start(m_turnLength);
+        }
+    }
+}
+
+void PlanetWarsGame::checkPlayerResponses() {
+    if (STEPPING != m_state) {
+        return;
+    }
+
+    //Check whether the players are ready to have their orders processed.
+    const bool arePlayersDone = (m_firstPlayer->isDoneTurn() && m_secondPlayer->isDoneTurn());
+
+    if (arePlayersDone) {
+        m_timer->stop();
+        this->completeStep();
+
+    } else {
+        if (m_isTimerIgnored) {
+            //Keep waiting until the players are done.
+            m_timer->stop();
+            m_timer->start(100);
+
+        } else {
+            if (m_timer->isActive()) {
+                //Wait for the turn to complete.
+                return;
+
+            } else {
+                //Complete the step whether the players are ready or not.
+                this->completeStep();
+            }
         }
     }
 }
@@ -797,6 +828,11 @@ int Player::povId(Player *player) const {
     } else {
         return 1;
     }
+}
+
+bool Player::isDoneTurn() {
+    bool isDone = (m_stdoutBuffer.find("go") != std::string::npos);
+    return isDone;
 }
 
 void Player::setLaunchCommand(QString launchCommand) {
