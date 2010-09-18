@@ -90,6 +90,9 @@ signals:
     void logMessage(const std::string& message, QObject* sender);
     void logError(const std::string& message, QObject* sender);
 
+    //A signal that the turn has ended.
+    void turnEnded();
+
 public slots:
     void setMapFileName(QString mapFileName);
 
@@ -237,11 +240,8 @@ public:
 
     //State of the fleet.
     bool hasArrived() const;
-    double getX() const;
-    double getY() const;
-
-signals:
-    void positionChanged(double x, double y);
+    double getX() const         {return m_x;}
+    double getY() const         {return m_y;}
 
 private:
     Player* m_owner;
@@ -255,6 +255,9 @@ private:
     //m_source and m_destination should be set before actually using this object.
     int m_sourceId;
     int m_destinationId;
+
+    double m_x;
+    double m_y;
 
     double m_sourceX;
     double m_sourceY;
@@ -313,6 +316,9 @@ public slots:
     void readStdErr();
     void onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
 
+    //Perform scheduled deletion of the QProcess object.
+    void deleteProcess();
+
 signals:
     //Log signals.
     void logMessage(const std::string& message, QObject* sender);
@@ -331,6 +337,8 @@ private:
     QProcess* m_process;
     std::string m_stdoutBuffer;   //A place for temporary storage of stdout output.
     bool m_isDoneTurn;
+
+    QTimer* m_processDeletionTimer; //A timer for scheduling QProcess object deletion.
 
 };
 

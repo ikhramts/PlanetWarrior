@@ -63,9 +63,6 @@ PlanetWarsGame::PlanetWarsGame(QObject* parent)
 void PlanetWarsGame::reset() {
     this->logMessage("Reloading the game... ");
 
-    //Stop any running processes.
-    this->stop();
-
     //Attempt to read the map from file.
     std::ifstream mapFile(m_mapFileName.c_str());
 
@@ -208,6 +205,10 @@ void PlanetWarsGame::reset() {
 
         return;
     }
+
+    //Parsed the map successfully. Reset the game.
+    //Stop any running processes.
+    this->stop();
 
     //If didn't fail, replace the old planets and fleets with the new.
     const int numOldPlanets = static_cast<int>(m_planets.size());
@@ -375,39 +376,41 @@ void PlanetWarsGame::completeStep() {
         }
     }
 
+    emit turnEnded();
+
     //Check for game end conditions.
+    bool isGameOver = false;
+
     if (firstPlayerShips == 0 && secondPlayerShips == 0) {
         this->logMessage("Draw.");
-        this->stop();
-        return;
+        isGameOver = true;
 
     } else if (firstPlayerShips == 0) {
         this->logMessage("Player 2 wins.");
-        this->stop();
-        return;
+        isGameOver = true;
 
     } else if (secondPlayerShips == 0) {
         this->logMessage("Player 1 wins.");
-        this->stop();
-        return;
-    }
+        isGameOver = true;
 
-    if (m_turn >= m_maxTurns) {
+    } else if (m_turn >= m_maxTurns) {
         if (firstPlayerShips > secondPlayerShips) {
             this->logMessage("Player 1 wins.");
-            this->stop();
-            return;
+            isGameOver = true;
 
         } else if (firstPlayerShips < secondPlayerShips) {
             this->logMessage("Player 2 wins.");
-            this->stop();
-            return;
+            isGameOver = true;
 
         } else {
             this->logMessage("Draw.");
-            this->stop();
-            return;
+            isGameOver = true;
         }
+    }
+
+    if (isGameOver) {
+        this->stop();
+        return;
     }
 
     //Game is not over.
@@ -756,10 +759,11 @@ void Fleet::setTurnsRemaining(int turnsRemaining) {
     const double tripDx = destinationX - sourceX;
     const double tripDy = destinationY - sourceY;
 
-    const double x = sourceX + tripDx * tripLength / travelled;
-    const double y = sourceY + tripDy * tripLength / travelled;
+    const double x = sourceX + tripDx * travelled / tripLength;
+    const double y = sourceY + tripDy * travelled / tripLength;
 
-    emit positionChanged(x, y);
+    m_x = x;
+    m_y = y;
 }
 
 void Fleet::advance() {
@@ -776,6 +780,10 @@ void Fleet::advance() {
 ====================================================*/
 Player::Player(QObject *parent)
     :QObject(parent), m_is_started(false), m_is_alive(false), m_process(NULL) {
+    //Set up the QProcess deletion timer.
+    m_processDeletionTimer = new QTimer(this);
+    m_processDeletionTimer->setSingleShot(true);
+    QObject::connect(m_processDeletionTimer, SIGNAL(timeout()), this, SLOT(deleteProcess()));
 }
 
 Player::~Player() {
@@ -811,22 +819,34 @@ void Player::start() {
 }
 
 void Player::stop() {
+    //Terminate the process.
     if (this->isRunning()) {
         //Ask the process politely to exit.
-        m_process->terminate();
+//        m_process->terminate();
 
-        if (!m_process->waitForFinished(1000)) {
-            //Didn't quit after 1 sec.  Kill it.
-            m_process->kill();
-            this->logError("Bot process killed.");
+//        if (!m_process->waitForFinished(1000)) {
+//            //Didn't quit after 1 sec.  Kill it.
+//            m_process->kill();
+//            this->logError("Bot process killed.");
 
-        } else {
-            this->logMessage("Bot process terminated.");
-        }
+//        } else {
+//            this->logMessage("Bot process terminated.");
+//        }
+        m_process->kill();
+        this->logMessage("Bot process terminated.");
+        m_process->waitForFinished(10);
 
-        delete m_process;
-        m_process = NULL;
+        //Schedule deletion of the QProcess object in the immediate future.
+        //QProcess object cannot be deleted here directly because somewhere
+        //down the call stack there may be a QProcess function that still
+        //wants to talk to this QProcess object.
+        m_processDeletionTimer->start(100);
     }
+}
+
+void Player::deleteProcess() {
+    m_process->deleteLater();
+    m_process = NULL;
 }
 
 std::string Player::readCommands() {
@@ -895,12 +915,7 @@ void Player::readStdErr() {
 }
 
 void Player::onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus) {
-    if (QProcess::CrashExit == exitStatus) {
-        this->logError("Bot process crashed.");
-    } else {
-        this->logMessage("Bot process exited.");
-    }
-
+    this->logMessage("Bot process exited.");
 }
 
 void Player::logMessage(const std::string &message) {
