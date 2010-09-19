@@ -596,12 +596,14 @@ void PlanetWarsGame::continueRunning() {
         return;
 
     } else if (m_runTimer->isActive()) {
-        return;
+        //return;
+        //Don't wait for 1 sec, go on to the next step.
+        m_runTimer->stop();
     }
 
     //Go on to the next step.
     this->step();
-    m_runTimer->start(1000);
+    m_runTimer->start(m_turnLength);
 }
 
 std::string PlanetWarsGame::toString(Player* pov) const {

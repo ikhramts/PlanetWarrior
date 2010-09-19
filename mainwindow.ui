@@ -331,6 +331,9 @@
     <property name="text">
      <string>Show planet IDs</string>
     </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
    </widget>
    <widget class="QCheckBox" name="showGrowthRates">
     <property name="geometry">
@@ -343,6 +346,9 @@
     </property>
     <property name="text">
      <string>Show growth rates</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QLabel" name="label_8">
