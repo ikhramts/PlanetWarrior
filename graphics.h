@@ -10,8 +10,9 @@
 #include <vector>
 #include <QColor>
 #include <QFont>
-#include <QGraphicsScene>
 #include <QGraphicsItem>
+#include <QGraphicsPolygonItem>
+#include <QGraphicsScene>
 #include <QPainter>
 #include <QPen>
 
@@ -46,11 +47,21 @@ public slots:
     //Remove a fleet.
     void removeFleetView(FleetView *fleetView);
 
+    //Planet display settings.
+    void setShowGrowthRates(bool showGrowthRates);
+    void setShowPlanetIds(bool showPlanetIds);
+    bool getShowGrowthRates() const                 {return m_showGrowthRates;}
+    bool getShowPlanetIds() const                   {return m_showPlanetIds;}
+
 private:
     PlanetWarsGame* m_game;
     GraphicsSettings* m_settings;
     std::vector<PlanetView*> m_planetViews;
     FleetViewList m_fleetViews;
+
+    //Planet display settings.
+    bool m_showGrowthRates;
+    bool m_showPlanetIds;
 };
 
 //A class representing a planet.
@@ -60,6 +71,7 @@ public:
 
     void setPlanet(Planet* planet);
     void setSettings(GraphicsSettings* settings) { m_settings = settings;}
+    void setPlanetWarsView(PlanetWarsView* view) { m_planetWarsView = view;}
 
     //The main painting logic.
     QRectF boundingRect() const;
@@ -72,6 +84,7 @@ public:
 private:
     Planet* m_planet;
     GraphicsSettings* m_settings;
+    PlanetWarsView* m_planetWarsView;
 
     qreal m_radius;
 };
@@ -92,6 +105,8 @@ public:
 
     void removeSelf();
 
+    QGraphicsPolygonItem* getArrow()        {return m_arrow;}
+
 private:
     Fleet* m_fleet;
     FleetConnector* m_connector;
@@ -99,6 +114,8 @@ private:
     PlanetWarsView* m_planetWarsView;
 
     qreal m_angle;
+
+    QGraphicsPolygonItem* m_arrow;
 };
 
 //This class is here because I can't seem to connect the fleet directly to the FleetView.
@@ -125,13 +142,26 @@ class GraphicsSettings : public QObject {
 public:
     GraphicsSettings(QObject* parent);
 
+    //General colors.
+    QColor backgroundColor;
+
+    //Planet colors
     QColor firstPlayerColor;
     QColor secondPlayerColor;
     QColor neutralColor;
-    QColor backgroundColor;
     QColor textColor;
     QFont planetFleetFont;
+
+    //Fleet colors.
     QFont fleetFont;
+    QColor firstPlayerFleetColor;
+    QColor secondPlayerFleetColor;
+    QPen firstPlayerFleetPen;
+    QPen secondPlayerFleetPen;
+
+    //Planet ids.
+    QFont planetIdFont;
+    QColor planetIdColor;
 
     QPen planetPen;
 

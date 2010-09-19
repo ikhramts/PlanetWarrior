@@ -70,6 +70,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //Set up the graphics view.
     PlanetWarsView* planetWarsView = new PlanetWarsView(this);
+    m_gameView = planetWarsView;
     planetWarsView->setGame(m_game);
 
     QGraphicsView* gameView = this->findChild<QGraphicsView*>("gameView");
@@ -136,16 +137,21 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(logSecondPlayerStdErr, SIGNAL(toggled(bool)),
                      logger, SLOT(setLogSecondPlayerStdErr(bool)));
 
-    //Connect the timer settings to the game engine.
+    //Connect the settings inputs to the game and graphics engines.
     QSpinBox* turnLength = this->findChild<QSpinBox*>("turnLength");
     QSpinBox* firstTurnLength = this->findChild<QSpinBox*>("firstTurnLength");
     QCheckBox* ignoreTimer = this->findChild<QCheckBox*>("ignoreTimer");
     QSpinBox* maxTurns = this->findChild<QSpinBox*>("maxTurns");
+    QCheckBox* showGrowthRates = this->findChild<QCheckBox*>("showGrowthRates");
+    QCheckBox* showPlanetIds = this->findChild<QCheckBox*>("showPlanetIds");
 
     m_game->setTurnLength(turnLength->value());
     m_game->setFirstTurnLength(firstTurnLength->value());
     m_game->setTimerIgnored(ignoreTimer->isChecked());
     m_game->setMaxTurns(maxTurns->value());
+
+    planetWarsView->setShowGrowthRates(showGrowthRates->isChecked());
+    planetWarsView->setShowPlanetIds(showPlanetIds->isChecked());
 
     QObject::connect(turnLength, SIGNAL(valueChanged(int)), m_game, SLOT(setTurnLength(int)));
     QObject::connect(firstTurnLength, SIGNAL(valueChanged(int)), m_game, SLOT(setFirstTurnLength(int)));
@@ -154,6 +160,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QObject::connect(ignoreTimer, SIGNAL(clicked(bool)), turnLength, SLOT(setDisabled(bool)));
     QObject::connect(ignoreTimer, SIGNAL(clicked(bool)), firstTurnLength, SLOT(setDisabled(bool)));
+
+    QObject::connect(showGrowthRates, SIGNAL(toggled(bool)), planetWarsView, SLOT(setShowGrowthRates(bool)));
+    QObject::connect(showPlanetIds, SIGNAL(toggled(bool)), planetWarsView, SLOT(setShowPlanetIds(bool)));
 
     //Load the settings.
     QSettings settings("PlanetWarrior.ini", QSettings::IniFormat);
@@ -166,6 +175,8 @@ MainWindow::MainWindow(QWidget *parent) :
     firstTurnLength->setValue(settings.value("firstTurnLength", 3000).toInt());
     ignoreTimer->setChecked(settings.value("isTimerIgnored", false).toBool());
     maxTurns->setValue(settings.value("maxTurns", 200).toInt());
+    showGrowthRates->setChecked(settings.value("showGrowthRates", false).toBool());
+    showPlanetIds->setChecked(settings.value("showPlanetIds", false).toBool());
 
     logFirstPlayerStdIn->setChecked(settings.value("logFirstPlayerStdIn", false).toBool());
     logFirstPlayerStdOut->setChecked(settings.value("logFirstPlayerStdOut", false).toBool());
@@ -207,6 +218,8 @@ void MainWindow::closeEvent(QCloseEvent* event) {
     settings.setValue("firstTurnLength", m_game->getFirstTurnLength());
     settings.setValue("isTimerIgnored", m_game->isTimerIgnored());
     settings.setValue("maxTurns", m_game->getMaxTurns());
+    settings.setValue("showGrowthRates", m_gameView->getShowGrowthRates());
+    settings.setValue("showPlanetIds", m_gameView->getShowPlanetIds());
 
     settings.setValue("logFirstPlayerStdIn", m_logger->isLoggingFirstPlayerStdIn());
     settings.setValue("logFirstPlayerStdOut", m_logger->isLoggingFirstPlayerStdOut());

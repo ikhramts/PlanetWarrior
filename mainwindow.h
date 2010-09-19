@@ -16,6 +16,7 @@
 
 //Forward-declared classes.
 class PlanetWarsGame;
+class PlanetWarsView;
 class Logger;
 
 namespace Ui {
@@ -49,6 +50,7 @@ private:
     QFileDialog* m_browseMapBotDialog;
 
     PlanetWarsGame* m_game;
+    PlanetWarsView* m_gameView;
     Logger* m_logger;
 };
 

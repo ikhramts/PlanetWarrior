@@ -157,7 +157,6 @@ private:
     //Run state settings.
     RunningState m_runningState;
     QTimer* m_runTimer;
-
 };
 
 //A class representing a planet.
