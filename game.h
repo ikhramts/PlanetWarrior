@@ -118,6 +118,9 @@ public slots:
     //Callback function for running the game.
     void continueRunning();
 
+    //Stop the player processes.
+    void stopPlayers();
+
 private:
     //Signal wrappers
     void logMessage(const std::string& message);

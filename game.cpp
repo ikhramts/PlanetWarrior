@@ -209,6 +209,7 @@ void PlanetWarsGame::reset() {
     //Parsed the map successfully. Reset the game.
     //Stop any running processes.
     this->stop();
+    this->stopPlayers();
 
     //If didn't fail, replace the old planets and fleets with the new.
     const int numOldPlanets = static_cast<int>(m_planets.size());
@@ -571,14 +572,9 @@ void PlanetWarsGame::pause() {
 }
 
 void PlanetWarsGame::stop() {
-    if (STOPPED != m_state) {
-        //Stop the players.
-        m_firstPlayer->stop();
-        m_secondPlayer->stop();
-        this->logMessage("Game ended.");
-        m_state = STOPPED;
-        m_runningState = PAUSED;
-    }
+    m_state = STOPPED;
+    m_runningState = PAUSED;
+    this->logMessage("Game ended");
 }
 
 void PlanetWarsGame::setMapFileName(QString mapFileName) {
@@ -637,6 +633,11 @@ std::string PlanetWarsGame::toString(Player* pov) const {
 
     return gameState.str();
 
+}
+
+void PlanetWarsGame::stopPlayers() {
+    m_firstPlayer->stop();
+    m_secondPlayer->stop();
 }
 
 void PlanetWarsGame::logMessage(const std::string &message) {
