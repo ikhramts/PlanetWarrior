@@ -7,7 +7,7 @@
  * Commercial licensing is available separately.
  */
 
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 #include <QCheckBox>
 #include <QGraphicsView>
@@ -16,7 +16,7 @@
 #include <QSettings>
 #include <QSpinBox>
 #include <QTextEdit>
-#include "ui_mainwindow.h"
+#include "Ui_MainWindow.h"
 #include "game.h"
 #include "graphics.h"
 #include "logger.h"
