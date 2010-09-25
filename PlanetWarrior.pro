@@ -7,5 +7,5 @@ INCLUDEPATH += .
 
 # Input
 HEADERS += game.h graphics.h logger.h utils.h MainWindow.h
-INTERFACES += MainWindow.ui
+FORMS += MainWindow.ui
 SOURCES += game.cpp graphics.cpp logger.cpp main.cpp utils.cpp MainWindow.cpp
