@@ -180,7 +180,7 @@ void PlanetWarsGame::reset() {
             }
 
             //Attempt to resolve the destination planet.
-            const int destinationId = fleet->getSourceId();
+            const int destinationId = fleet->getDestinationId();
 
             if (destinationId < 0 || destinationId >= numPlanets) {
                 std::stringstream message;
@@ -191,8 +191,11 @@ void PlanetWarsGame::reset() {
                 break;
 
             } else {
-                fleet->setSource(planets[sourceId]);
+                fleet->setDestination(planets[destinationId]);
             }
+
+            //This will force recalculation of the current position.
+            fleet->setTurnsRemaining(fleet->getTurnsRemaining());
 
             ++fleetIndex;
         }
@@ -745,28 +748,30 @@ void Planet::landFleet(Fleet *fleet) {
                 Class Fleet.
 ====================================================*/
 Fleet::Fleet(QObject *parent)
-    :QObject(parent) {
+    :QObject(parent), m_source(NULL), m_destination(NULL) {
 }
 
 void Fleet::setTurnsRemaining(int turnsRemaining) {
     m_turnsRemaining = turnsRemaining;
 
     //Update the position change.
-    const double sourceX = m_source->getX();
-    const double sourceY = m_source->getY();
-    const double destinationX = m_destination->getX();
-    const double destinationY = m_destination->getY();
-    const double tripLength = static_cast<double>(m_totalTripLength);
-    const double travelled = static_cast<double>(m_totalTripLength - turnsRemaining);
+    if (NULL != m_source && NULL != m_destination) {
+        const double sourceX = m_source->getX();
+        const double sourceY = m_source->getY();
+        const double destinationX = m_destination->getX();
+        const double destinationY = m_destination->getY();
+        const double tripLength = static_cast<double>(m_totalTripLength);
+        const double travelled = static_cast<double>(m_totalTripLength - turnsRemaining);
 
-    const double tripDx = destinationX - sourceX;
-    const double tripDy = destinationY - sourceY;
+        const double tripDx = destinationX - sourceX;
+        const double tripDy = destinationY - sourceY;
 
-    const double x = sourceX + tripDx * travelled / tripLength;
-    const double y = sourceY + tripDy * travelled / tripLength;
+        const double x = sourceX + tripDx * travelled / tripLength;
+        const double y = sourceY + tripDy * travelled / tripLength;
 
-    m_x = x;
-    m_y = y;
+        m_x = x;
+        m_y = y;
+    }
 }
 
 void Fleet::advance() {
