@@ -108,6 +108,7 @@ public slots:
     void setFirstTurnLength(int firstTurnLength){m_firstTurnLength = firstTurnLength;}
     void setTimerIgnored(bool isTimerIgnored)   {m_isTimerIgnored = isTimerIgnored;}
     void setMaxTurns(int maxTurns)              {m_maxTurns = maxTurns;}
+    void setRenderDelay(int delayMs)            {m_renderDelay = delayMs;}
 
     //Complete the step once the timer times out.
     void completeStep();
@@ -156,6 +157,7 @@ private:
     int m_turnLength;
     bool m_isTimerIgnored;
     int m_maxTurns;
+    int m_renderDelay;
 
     //Run state settings.
     RunningState m_runningState;
@@ -194,6 +196,26 @@ public:
 
     //Handle arrival of a fleet.
     void landFleet(Fleet* fleet);
+    
+    //Manage externally-defined properties
+    std::string getProperty(const std::string& prop) {
+        if (m_properties.count(prop))
+            return m_properties[prop];
+        return std::string();
+    }
+    
+    //Manage externally-defined properties
+    void setProperty(const std::string& name, const std::string& val) {
+        m_properties[name] = val;
+    }
+    
+    std::vector<std::string> getPropNames() const {
+        std::vector<std::string> names;
+        typedef std::map<std::string, std::string>::const_iterator CI;
+        for (CI i = m_properties.begin(); i != m_properties.end(); ++i)
+            names.push_back(i->first);
+        return names;
+    }
 
 signals:
     void ownerSet(Player* owner);
@@ -209,7 +231,7 @@ private:
     PlanetWarsGame* m_game;
 
     std::vector<Fleet*> m_landedFleets;
-
+    std::map<std::string, std::string> m_properties;
 };
 
 //A class representing a fleet.

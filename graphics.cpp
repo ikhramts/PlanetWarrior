@@ -55,6 +55,7 @@ PlanetWarsView::PlanetWarsView(QObject *parent)
     this->setBackgroundBrush(m_settings->backgroundColor);
     m_showGrowthRates = true;
     m_showPlanetIds = true;
+    m_showPlanetProps = true;
 }
 
 void PlanetWarsView::setGame(PlanetWarsGame *game) {
@@ -150,6 +151,7 @@ void PlanetWarsView::setShowGrowthRates(bool showGrowthRates) {
 
 void PlanetWarsView::setShowPlanetIds(bool showPlanetIds) {
     m_showPlanetIds = showPlanetIds;
+    m_showPlanetProps = showPlanetIds;
     this->update();
 }
 
@@ -197,6 +199,11 @@ void PlanetView::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
         painter->setBrush(m_settings->neutralColor);
     }
 
+    std::string val;
+    if ((val = m_planet->getProperty("color")).size()) {
+        painter->setBrush(QBrush(QColor(val.c_str())));
+    }
+
     QPointF center(0, 0);
 
     painter->drawEllipse(center, m_radius, m_radius);
@@ -234,6 +241,23 @@ void PlanetView::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
         painter->setFont(m_settings->planetIdFont);
         painter->drawText(this->boundingRect(), Qt::AlignLeft|Qt::AlignTop, qPlanetId);
     }
+    if(m_planetWarsView->getShowPlanetProps()) {
+        std::stringstream streamPlanetProps;
+        std::vector<std::string> propNames = m_planet->getPropNames();
+        if (propNames.size()) {
+            for (int i = 0; i < propNames.size(); ++i) {
+                streamPlanetProps << propNames[i] << ": " 
+                    << m_planet->getProperty(propNames[i]) << endl;
+            }
+
+            QString qPlanetProps(streamPlanetProps.str().c_str());
+
+            painter->setPen(QColor("white"));
+            painter->setFont(m_settings->fleetFont);
+            painter->drawText(center + QPoint(8, -24), qPlanetProps);
+        }
+    }
+
 }
 
 /*===================================================

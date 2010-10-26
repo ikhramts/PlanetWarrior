@@ -52,6 +52,7 @@ public slots:
     void setShowPlanetIds(bool showPlanetIds);
     bool getShowGrowthRates() const                 {return m_showGrowthRates;}
     bool getShowPlanetIds() const                   {return m_showPlanetIds;}
+    bool getShowPlanetProps() const                 {return m_showPlanetProps;}
 
 private:
     PlanetWarsGame* m_game;
@@ -62,6 +63,7 @@ private:
     //Planet display settings.
     bool m_showGrowthRates;
     bool m_showPlanetIds;
+    bool m_showPlanetProps;
 };
 
 //A class representing a planet.

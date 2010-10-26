@@ -16,7 +16,8 @@
 #include <QSettings>
 #include <QSpinBox>
 #include <QTextEdit>
-#include "Ui_MainWindow.h"
+#include <QLineEdit>
+#include "ui_MainWindow.h"
 #include "game.h"
 #include "graphics.h"
 #include "logger.h"
@@ -234,4 +235,9 @@ void MainWindow::closeEvent(QCloseEvent* event) {
 void MainWindow::on_playButton_clicked()
 {
 
+}
+
+void MainWindow::on_renderDelay_valueChanged(int value)
+{
+    m_game->setRenderDelay(value);
 }

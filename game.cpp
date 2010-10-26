@@ -441,6 +441,22 @@ bool PlanetWarsGame::processOrders(const std::string &allOrders, Player *player)
             foundGo = true;
             break;
         }
+        else if (line[0] == '#') {
+            if (line.size() < 2 || line[1] != '-')
+                continue;
+            std::vector<std::string> tokens = Tokenize(line, " ");
+            tokens.erase(tokens.begin());
+            if (tokens.size() == 4 && tokens[0] == "planet") {
+                int planetId = atoi(tokens[1].c_str());
+                const std::string& name = tokens[2];
+                const std::string& value = tokens[3];
+
+                Planet* planet = m_planets[planetId];
+                planet->setProperty(name, value);
+            }
+            continue;
+        }
+
 
         std::vector<std::string> tokens = Tokenize(line, " ");
 
@@ -599,6 +615,15 @@ void PlanetWarsGame::continueRunning() {
         //Don't wait for 1 sec, go on to the next step.
         m_runTimer->stop();
     }
+
+    //Pause for nice rendering
+    class Sleeper: public QThread {
+    public:
+        Sleeper(int delay) {
+            QThread::currentThread()->msleep(delay);
+        }
+    };
+    Sleeper s(m_renderDelay);
 
     //Go on to the next step.
     this->step();
