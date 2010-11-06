@@ -241,11 +241,13 @@ void PlanetView::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
         painter->setFont(m_settings->planetIdFont);
         painter->drawText(this->boundingRect(), Qt::AlignLeft|Qt::AlignTop, qPlanetId);
     }
-    if(m_planetWarsView->getShowPlanetProps()) {
+
+    //If requested, draw additional planet property data.
+    if (m_planetWarsView->getShowPlanetProps()) {
         std::stringstream streamPlanetProps;
         std::vector<std::string> propNames = m_planet->getPropNames();
         if (propNames.size()) {
-            for (int i = 0; i < propNames.size(); ++i) {
+            for (uint i = 0; i < propNames.size(); ++i) {
                 streamPlanetProps << propNames[i] << ": " 
                     << m_planet->getProperty(propNames[i]) << endl;
             }

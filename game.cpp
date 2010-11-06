@@ -440,10 +440,13 @@ bool PlanetWarsGame::processOrders(const std::string &allOrders, Player *player)
         } else if (line.compare("go") == 0) {
             foundGo = true;
             break;
-        }
-        else if (line[0] == '#') {
+
+        } else if (line[0] == '#') {
+            //Check whether this is a special directive to the visualizer to display
+            //a planet property.  If so, save that property with the planet object.
             if (line.size() < 2 || line[1] != '-')
                 continue;
+
             std::vector<std::string> tokens = Tokenize(line, " ");
             tokens.erase(tokens.begin());
             if (tokens.size() == 4 && tokens[0] == "planet") {
@@ -454,6 +457,7 @@ bool PlanetWarsGame::processOrders(const std::string &allOrders, Player *player)
                 Planet* planet = m_planets[planetId];
                 planet->setProperty(name, value);
             }
+
             continue;
         }
 
